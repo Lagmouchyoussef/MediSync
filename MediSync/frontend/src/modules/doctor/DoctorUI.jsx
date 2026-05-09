@@ -4,7 +4,7 @@ import { useTheme } from "./DoctorShared";
 // ==================== Icon Component ====================
 export function Icon({ name, className = "w-5 h-5" }) {
   const icons = {
-    dashboard: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
+    dashboard: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
     patients: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
     appointments: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
     history: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -46,13 +46,24 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }) {
   const sizeClasses = { sm: "max-w-md", md: "max-w-lg", lg: "max-w-2xl", xl: "max-w-4xl" };
   return (
     <AnimatePresence>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} onClick={(e) => e.stopPropagation()} className={`${dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} rounded-2xl shadow-2xl ${sizeClasses[size]} w-full max-h-[90vh] overflow-y-auto border`}>
-          <div className={`flex items-center justify-between p-6 border-b ${dark ? "border-gray-700" : "border-gray-100"}`}>
-            <h2 className={`text-xl font-bold ${dark ? "text-white" : "text-gray-800"}`}>{title}</h2>
-            <button onClick={onClose} className={`p-2 rounded-full transition-colors ${dark ? "hover:bg-gray-700" : "hover:bg-gray-100"}`}><Icon name="close" className={`w-5 h-5 ${dark ? "text-gray-400" : "text-gray-500"}`} /></button>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 backdrop-blur-sm bg-slate-900/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <style>
+          {`
+            .modal-scrollbar::-webkit-scrollbar { width: 6px; }
+            .modal-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .modal-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+            .dark .modal-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+            .modal-scrollbar::-webkit-scrollbar-thumb:hover { background: #2da0a8; }
+          `}
+        </style>
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className={`${dark ? "bg-slate-900 border-slate-800" : "bg-white border-white"} rounded-[2rem] shadow-2xl ${sizeClasses[size]} w-full max-h-[85vh] overflow-hidden border flex flex-col`}>
+          <div className={`flex items-center justify-between p-6 border-b ${dark ? "border-slate-800" : "border-slate-100"} shrink-0`}>
+            <h2 className={`text-xl font-black tracking-tight ${dark ? "text-white" : "text-slate-800"}`}>{title}</h2>
+            <button onClick={onClose} className={`p-2 rounded-xl transition-all ${dark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}><Icon name="close" className="w-5 h-5" /></button>
           </div>
-          <div className="p-6">{children}</div>
+          <div className="p-8 overflow-y-auto modal-scrollbar flex-1 pr-6 mr-1">
+            {children}
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
@@ -63,14 +74,14 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }) {
 export function Badge({ children, variant = "default" }) {
   const { dark } = useTheme();
   const variants = {
-    default: dark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700",
-    success: dark ? "bg-green-900 text-green-300" : "bg-green-100 text-green-700",
-    warning: dark ? "bg-yellow-900 text-yellow-300" : "bg-yellow-100 text-yellow-700",
-    danger: dark ? "bg-red-900 text-red-300" : "bg-red-100 text-red-700",
-    info: dark ? "bg-blue-900 text-blue-300" : "bg-blue-100 text-blue-700",
-    purple: dark ? "bg-purple-900 text-purple-300" : "bg-purple-100 text-purple-700",
+    default: dark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600",
+    success: dark ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-50 text-emerald-600",
+    warning: dark ? "bg-amber-500/20 text-amber-400" : "bg-amber-50 text-amber-600",
+    danger: dark ? "bg-rose-500/20 text-rose-400" : "bg-rose-50 text-rose-600",
+    info: dark ? "bg-blue-500/20 text-blue-400" : "bg-blue-50 text-blue-600",
+    purple: dark ? "bg-purple-500/20 text-purple-400" : "bg-purple-50 text-purple-600",
   };
-  return <span className={`px-3 py-1 rounded-full text-xs font-medium ${variants[variant]}`}>{children}</span>;
+  return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${variants[variant]}`}>{children}</span>;
 }
 
 // ==================== SearchInput ====================
@@ -88,14 +99,23 @@ export function SearchInput({ value, onChange, placeholder = "Search..." }) {
 export function StatCard({ icon, label, value, change, color, delay = 0 }) {
   const { dark } = useTheme();
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.4 }} className={`${dark ? "bg-gray-800 border-gray-700 hover:border-gray-600" : "bg-white border-gray-100 hover:shadow-md"} rounded-2xl p-6 shadow-sm border transition-all`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className={`text-sm ${dark ? "text-gray-400" : "text-gray-500"} mb-1`}>{label}</p>
-          <p className={`text-3xl font-bold ${dark ? "text-white" : "text-gray-800"}`}>{value}</p>
-          {change && <p className={`text-sm mt-2 ${change > 0 ? "text-green-500" : "text-red-500"}`}>{change > 0 ? "↑" : "↓"} {Math.abs(change)}% this month</p>}
-        </div>
-        <div className={`p-4 rounded-2xl ${color}`}><Icon name={icon} className="w-8 h-8 text-white" /></div>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ delay }} 
+      className={`${dark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"} rounded-2xl p-6 border shadow-sm flex items-center justify-between`}
+    >
+      <div>
+        <p className={`text-sm font-medium ${dark ? "text-slate-400" : "text-slate-500"}`}>{label}</p>
+        <h4 className={`text-2xl font-bold mt-1 ${dark ? "text-white" : "text-slate-800"}`}>{value}</h4>
+        {change && (
+          <p className={`text-xs font-medium mt-1 ${change > 0 ? "text-emerald-500" : "text-rose-500"}`}>
+            {change > 0 ? "↑" : "↓"} {Math.abs(change)}% this month
+          </p>
+        )}
+      </div>
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white ${color} shadow-lg shadow-current/10`}>
+        <Icon name={icon} className="w-6 h-6" />
       </div>
     </motion.div>
   );

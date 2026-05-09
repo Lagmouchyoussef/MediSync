@@ -24,50 +24,40 @@ export default function Dashboard() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <StatCard icon="patients" label="Total Patients" value="1,247" change={12} color="bg-blue-500" delay={0} />
-        <StatCard icon="calendar" label="Today's Appointments" value="23" change={8} color="bg-green-500" delay={0.1} />
-        <StatCard icon="currency" label="Monthly Revenue" value="45,800 DH" change={15} color="bg-yellow-500" delay={0.2} />
-        <StatCard icon="heart" label="Consultations" value="342" change={-3} color="bg-purple-500" delay={0.3} />
+        <StatCard icon="calendar" label="Today's Appointments" value="23" change={8} color="bg-emerald-500" delay={0.1} />
+        <StatCard icon="heart" label="Consultations" value="342" change={-3} color="bg-purple-500" delay={0.2} />
+        <StatCard icon="messages" label="Doctor Invitations" value="156" change={24} color="bg-[#2da0a8]" delay={0.3} />
+        <StatCard icon="patients" label="Patient Requests" value="89" change={12} color="bg-amber-500" delay={0.4} />
+        <StatCard icon="alert" label="Emergencies" value="14" change={5} color="bg-rose-600" delay={0.5} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className={`lg:col-span-2 ${dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} rounded-2xl p-6 shadow-sm border`}>
-          <h3 className={`text-lg font-semibold mb-4 ${dark ? "text-white" : "text-gray-800"}`}>Monthly Revenue</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={monthlyRevenue}>
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2da0a8" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#2da0a8" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-              <XAxis dataKey="month" stroke={chartTextColor} fontSize={12} />
-              <YAxis stroke={chartTextColor} fontSize={12} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value) => [`${value} DH`, "Revenue"]} />
-              <Area type="monotone" dataKey="amount" stroke="#2da0a8" strokeWidth={2} fill="url(#colorRevenue)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className={`${dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} rounded-2xl p-6 shadow-sm border`}>
+      <div className="grid grid-cols-1 gap-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className={`${dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} rounded-2xl p-6 shadow-sm border`}>
           <h3 className={`text-lg font-semibold mb-4 ${dark ? "text-white" : "text-gray-800"}`}>Appointment Types</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={appointmentTypes} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                {appointmentTypes.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
-              </Pie>
-              <Tooltip contentStyle={tooltipStyle} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex flex-wrap gap-2 justify-center mt-2">
-            {appointmentTypes.map((item, index) => (
-              <div key={item.name} className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index] }} />
-                <span className={`text-xs ${dark ? "text-gray-400" : "text-gray-500"}`}>{item.name}</span>
-              </div>
-            ))}
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            <div className="flex-1 w-full" style={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={appointmentTypes} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                    {appointmentTypes.map((_, index) => (<Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />))}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex flex-wrap lg:flex-col gap-4 justify-center">
+              {appointmentTypes.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-3">
+                  <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index] }} />
+                  <div>
+                    <p className={`text-sm font-bold ${dark ? "text-gray-200" : "text-gray-700"}`}>{item.name}</p>
+                    <p className={`text-xs ${dark ? "text-gray-400" : "text-gray-500"}`}>{item.value} cases</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>

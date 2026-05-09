@@ -7,7 +7,7 @@ import Logo from "../../shared/components/Logo";
 // ==================== Icon Component ====================
 function Icon({ name, className = "w-5 h-5" }) {
   const icons = {
-    overview: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
+    overview: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
     appointments: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
     records: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
     messages: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>,
@@ -25,7 +25,6 @@ function Icon({ name, className = "w-5 h-5" }) {
 export default function PatientDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (!apiService.isAuthenticated() || apiService.getUserRole() !== 'patient') {
@@ -47,84 +46,114 @@ export default function PatientDashboard() {
   ];
 
   return (
-    <div className="flex h-screen bg-[#f8fafc]">
-      {/* Sidebar */}
-      <aside className={`bg-white border-r border-slate-200 transition-all duration-300 flex flex-col ${sidebarOpen ? "w-72" : "w-24"}`}>
-        <div className="p-8 flex flex-col items-center justify-center border-b border-slate-100">
-          <Logo size={sidebarOpen ? 120 : 48} className="transition-all duration-500" />
+    <div className="min-h-screen bg-[#f8fafc] flex overflow-hidden">
+      {/* ==================== LEFT SIDEBAR ==================== */}
+      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 relative">
+        <div className="py-8 flex items-center justify-center cursor-pointer" onClick={() => setActiveTab('overview')}>
+          <div className="relative group">
+            <div className="absolute -inset-4 bg-gradient-to-r from-teal-500/10 to-blue-500/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <Logo size={100} />
+          </div>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
+          <div className="space-y-3">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] px-4 text-slate-400 flex items-center gap-3">
+              Patient Portal
+              <span className="h-px flex-1 bg-slate-100"></span>
+            </p>
+            <div className="space-y-1.5">
+              {navItems.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button 
+                    key={item.id} 
+                    onClick={() => setActiveTab(item.id)} 
+                    className={`w-full group flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-bold transition-all duration-300 relative overflow-hidden ${
+                      isActive 
+                        ? "bg-gradient-to-r from-[#2da0a8] to-[#20838a] text-white shadow-lg shadow-[#2da0a8]/25" 
+                        : "text-slate-500 hover:text-[#2da0a8] hover:bg-slate-50"
+                    }`}
+                  >
+                    {!isActive && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-[#2da0a8] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                    )}
+                    <div className={`${isActive ? "text-white" : "text-slate-400 group-hover:text-[#2da0a8]"} transition-colors duration-300`}>
+                      <Icon name={item.icon} className="w-6 h-6" />
+                    </div>
+                    <span className="flex-1 text-left transform group-hover:translate-x-1 transition-transform duration-300">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        <nav className="flex-1 flex flex-col py-4 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = activeTab === item.id;
-            return (
-              <button 
-                key={item.id} 
-                onClick={() => setActiveTab(item.id)} 
-                className={`w-full flex items-center gap-4 px-8 py-5 transition-all duration-300 border-b border-slate-50 ${
-                  isActive 
-                    ? "bg-[#2da0a8] text-white border-l-4 border-l-white/50" 
-                    : "text-slate-500 hover:bg-slate-50 border-l-4 border-l-transparent"
-                }`}
-              >
-                <Icon name={item.icon} className="w-5 h-5 flex-shrink-0" />
-                <AnimatePresence>
-                  {sidebarOpen && (
-                    <motion.span 
-                      initial={{ opacity: 0, x: -10 }} 
-                      animate={{ opacity: 1, x: 0 }} 
-                      exit={{ opacity: 0, x: -10 }} 
-                      className="text-sm font-bold tracking-tight whitespace-nowrap overflow-hidden flex-1 text-left uppercase"
-                    >
-                      {item.label}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="p-6 border-t border-slate-100">
-          <div className={`flex items-center gap-3 p-3 rounded-2xl bg-slate-50 ${sidebarOpen ? "" : "justify-center"}`}>
-            <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-teal-500/20">
-              {(apiService.getUserEmail() || 'A').charAt(0).toUpperCase()}
-            </div>
-            {sidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-black tracking-tighter text-[#2da0a8] uppercase truncate">{(apiService.getUserEmail() || 'Patient').split('@')[0]}</p>
-                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Active Session</p>
+        <div className="p-5 m-4 mt-2 rounded-2xl border bg-white border-slate-100 shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="relative">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-[#2da0a8]/20">
+                {(apiService.getUserEmail() || 'P').charAt(0).toUpperCase()}
               </div>
-            )}
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-bold truncate leading-tight text-slate-800">{(apiService.getUserEmail() || 'Patient').split('@')[0]}</p>
+              <p className="text-[11px] font-medium truncate mt-0.5 text-slate-500">Premium Member</p>
+            </div>
+            <button onClick={handleLogout} className="p-2.5 rounded-xl transition-all duration-300 bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-500" title="Logout">
+              <Icon name="logout" className="w-4 h-4" />
+            </button>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 text-red-500 text-xs font-black uppercase tracking-widest hover:bg-red-50 rounded-xl transition-all"
-          >
-            <Icon name="logout" className="w-4 h-4" />
-            {sidebarOpen && <span>Logout</span>}
-          </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-8">
-        <header className="flex justify-between items-center mb-10">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 lg:hidden">
-              <Icon name="menu" className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Welcome, {(apiService.getUserEmail() || 'Guest').split('@')[0]}</h1>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Your health is our priority.</p>
+      {/* ==================== MAIN CONTENT AREA ==================== */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 sm:px-10 py-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center gap-6">
+            <div className="lg:hidden relative cursor-pointer" onClick={() => setActiveTab("overview")}>
+              <Logo size={80} className="relative" />
+            </div>
+            
+            {/* Page Context */}
+            <div className="hidden sm:flex flex-col">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                Patient Portal / Medical
+              </p>
+              <h2 className="text-xl font-black tracking-tight capitalize text-slate-800">
+                {activeTab}
+              </h2>
             </div>
           </div>
-          
-          <button className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-600 hover:bg-slate-50 relative shadow-sm">
-            <Icon name="bell" className="w-5 h-5" />
-            <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+
+          <div className="flex items-center gap-4 ml-auto">
+            {/* Quick Support Button */}
+            <button className="hidden md:flex items-center gap-2 bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl text-[12px] font-bold hover:bg-slate-100 transition-all border border-slate-100">
+              <Icon name="messages" className="w-4 h-4 text-[#2da0a8]" />
+              <span>Support</span>
+            </button>
+
+            <div className="h-8 w-px bg-slate-100 mx-2 hidden md:block"></div>
+
+            <button className="relative p-3 rounded-xl bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-[#2da0a8] transition-all duration-300">
+              <Icon name="bell" className="w-5.5 h-5.5" />
+              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            </button>
+            <div className="lg:hidden">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
+                {(apiService.getUserEmail() || 'P').charAt(0).toUpperCase()}
+              </div>
+            </div>
+          </div>
         </header>
+
+        {/* ==================== MAIN CONTENT ==================== */}
+        <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full overflow-y-auto custom-scrollbar">
+        <div className="mb-10">
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Welcome, {(apiService.getUserEmail() || 'Guest').split('@')[0]}</h1>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Your health is our priority.</p>
+        </div>
 
         {/* Quick Health Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
