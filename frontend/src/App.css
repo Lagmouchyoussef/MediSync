@@ -23,6 +23,13 @@ body {
   position: relative;
 }
 
+.content {
+  margin-top: 80px; /* Offset for Navbar */
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .glass-container {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
