@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 import Logo from "../../shared/components/Logo";
 import apiService from "../../core/services/api";
 
@@ -7,6 +8,7 @@ export default function Login() {
   const [active, setActive] = useState(false);
   const [isForgot, setIsForgot] = useState(false);
   const [role, setRole] = useState("patient");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -86,7 +88,22 @@ export default function Login() {
               <input className="input-base" placeholder="Last Name" value={lastName} onChange={handleLastNameChange} name="last_name" required />
             </div>
             <input className="input-base mt-2" type="email" name="email" placeholder="Email" required />
-            <input className="input-base mt-2" type="password" name="password" placeholder="Password" required />
+            <div className="relative w-full mt-2">
+              <input 
+                className="input-base pr-10" 
+                type={showPassword ? "text" : "password"} 
+                name="password" 
+                placeholder="Password" 
+                required 
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <div className="flex gap-3 mt-3">
               <button type="button" onClick={() => setRole("patient")} className={`role-pill ${role === "patient" ? "active" : ""}`}>
                 <i className="fa-solid fa-user"></i> Patient
@@ -124,7 +141,22 @@ export default function Login() {
               <Logo size={120} />
               <h1 className="text-2xl font-bold mt-3 mb-1">Login</h1>
               <input name="email" className="input-base" type="email" placeholder="Email" required />
-              <input name="password" className="input-base mt-2" type="password" placeholder="Password" required />
+              <div className="relative w-full mt-2">
+                <input 
+                  name="password" 
+                  className="input-base pr-10" 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Password" 
+                  required 
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               
               <div className="flex gap-3 mt-3">
                 <button type="button" onClick={() => setRole("patient")} className={`role-pill ${role === "patient" ? "active" : ""}`}>
