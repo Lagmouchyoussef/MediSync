@@ -79,7 +79,7 @@ export default function DoctorDashboard() {
       title: "Clinical",
       items: [
         { id: "patients", label: "Patients", icon: "patients", badge: patients.length },
-        { id: "appointments", label: "Planning", icon: "appointments", badge: mockAppointments.filter((a) => a.status === "Pending").length },
+        { id: "appointments", label: "Availability", icon: "appointments", badge: mockAppointments.filter((a) => a.status === "Pending").length },
       ]
     },
     {

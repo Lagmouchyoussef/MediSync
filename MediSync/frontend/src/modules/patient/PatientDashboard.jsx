@@ -201,7 +201,8 @@ export default function PatientDashboard() {
             </button>
           </div>
         </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

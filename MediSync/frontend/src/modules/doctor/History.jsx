@@ -18,12 +18,15 @@ export default function History() {
     { id: 10, type: "Modification", patient: "Youssef El Amrani", user: "Administrator", date: "2026-05-06", time: "17:00", description: "Patient status change: Active → Inactive", category: "admin" },
     { id: 11, type: "Consultation", patient: "Fatima Zahra", user: "Dr. Leila Berrada", date: "2026-05-06", time: "11:00", description: "Anemia treatment follow-up - Improvement noted", category: "medical" },
     { id: 12, type: "Login", patient: "-", user: "Dr. Hassan Amrani", date: "2026-05-06", time: "07:45", description: "Logged into system from IP address 192.168.1.100", category: "security" },
+    { id: 13, type: "Alert", patient: "System", user: "System", date: "2026-05-06", time: "06:00", description: "System backup completed successfully", category: "notification" },
+    { id: 14, type: "Reminder", patient: "Ahmed Benali", user: "System", date: "2026-05-05", time: "09:00", description: "Automated SMS reminder sent for tomorrow's appointment", category: "notification" },
   ]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const categories = [
     { id: "all", label: "All", icon: "activity" }, { id: "medical", label: "Medical", icon: "heart" },
-    { id: "appointment", label: "Appointment", icon: "calendar" }, { id: "admin", label: "Administration", icon: "settings" }, { id: "security", label: "Security", icon: "eye" },
+    { id: "appointment", label: "Appointment", icon: "calendar" }, { id: "admin", label: "Administration", icon: "settings" }, 
+    { id: "security", label: "Security", icon: "eye" }, { id: "notification", label: "Notifications", icon: "bell" },
   ];
   
   const filteredHistory = useMemo(() => history.filter((item) => { 
@@ -31,8 +34,8 @@ export default function History() {
     return filterCategory === "all" || item.category === filterCategory ? matchSearch : false; 
   }), [history, searchTerm, filterCategory]);
 
-  const getCategoryColor = (cat) => { const c = { medical: dark ? "bg-red-900 text-red-300 border-red-800" : "bg-red-100 text-red-700 border-red-200", appointment: dark ? "bg-blue-900 text-blue-300 border-blue-800" : "bg-blue-100 text-blue-700 border-blue-200", admin: dark ? "bg-gray-700 text-gray-300 border-gray-600" : "bg-gray-100 text-gray-700 border-gray-200", security: dark ? "bg-yellow-900 text-yellow-300 border-yellow-800" : "bg-yellow-100 text-yellow-700 border-yellow-200" }; return c[cat] || c.admin; };
-  const getCategoryIcon = (cat) => ({ medical: "heart", appointment: "calendar", admin: "settings", security: "eye" }[cat] || "activity");
+  const getCategoryColor = (cat) => { const c = { medical: dark ? "bg-red-900 text-red-300 border-red-800" : "bg-red-100 text-red-700 border-red-200", appointment: dark ? "bg-blue-900 text-blue-300 border-blue-800" : "bg-blue-100 text-blue-700 border-blue-200", admin: dark ? "bg-gray-700 text-gray-300 border-gray-600" : "bg-gray-100 text-gray-700 border-gray-200", security: dark ? "bg-yellow-900 text-yellow-300 border-yellow-800" : "bg-yellow-100 text-yellow-700 border-yellow-200", notification: dark ? "bg-purple-900 text-purple-300 border-purple-800" : "bg-purple-100 text-purple-700 border-purple-200" }; return c[cat] || c.admin; };
+  const getCategoryIcon = (cat) => ({ medical: "heart", appointment: "calendar", admin: "settings", security: "eye", notification: "bell" }[cat] || "activity");
   const textPrimary = dark ? "text-white" : "text-gray-800";
   const textSecondary = dark ? "text-gray-400" : "text-gray-500";
   const cardClass = dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100";
@@ -43,8 +46,8 @@ export default function History() {
   return (
     <div className="space-y-6">
       <div><h1 className={`text-2xl font-bold ${textPrimary}`}>Activity History</h1><p className={`mt-1 ${textSecondary}`}>View all system actions and events</p></div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {[{ label: "Consultations", count: history.filter((h) => h.category === "medical").length, icon: "heart", bg: dark ? "bg-red-900" : "bg-red-100", color: dark ? "text-red-300" : "text-red-600" }, { label: "Appointments", count: history.filter((h) => h.category === "appointment").length, icon: "calendar", bg: dark ? "bg-blue-900" : "bg-blue-100", color: dark ? "text-blue-300" : "text-blue-600" }, { label: "Administration", count: history.filter((h) => h.category === "admin").length, icon: "settings", bg: dark ? "bg-gray-700" : "bg-gray-100", color: dark ? "text-gray-300" : "text-gray-600" }, { label: "Security", count: history.filter((h) => h.category === "security").length, icon: "eye", bg: dark ? "bg-yellow-900" : "bg-yellow-100", color: dark ? "text-yellow-300" : "text-yellow-600" }].map((s, idx) => (<div key={idx} className={`${cardClass} rounded-2xl p-5 shadow-sm border`}><div className="flex items-center gap-3"><div className={`p-3 ${s.bg} rounded-xl`}><Icon name={s.icon} className={`w-6 h-6 ${s.color}`} /></div><div><p className={`text-2xl font-bold ${textPrimary}`}>{s.count}</p><p className={`text-sm ${textSecondary}`}>{s.label}</p></div></div></div>))}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {[{ label: "Consultations", count: history.filter((h) => h.category === "medical").length, icon: "heart", bg: dark ? "bg-red-900" : "bg-red-100", color: dark ? "text-red-300" : "text-red-600" }, { label: "Appointments", count: history.filter((h) => h.category === "appointment").length, icon: "calendar", bg: dark ? "bg-blue-900" : "bg-blue-100", color: dark ? "text-blue-300" : "text-blue-600" }, { label: "Administration", count: history.filter((h) => h.category === "admin").length, icon: "settings", bg: dark ? "bg-gray-700" : "bg-gray-100", color: dark ? "text-gray-300" : "text-gray-600" }, { label: "Security", count: history.filter((h) => h.category === "security").length, icon: "eye", bg: dark ? "bg-yellow-900" : "bg-yellow-100", color: dark ? "text-yellow-300" : "text-yellow-600" }, { label: "Notifications", count: history.filter((h) => h.category === "notification").length, icon: "bell", bg: dark ? "bg-purple-900" : "bg-purple-100", color: dark ? "text-purple-300" : "text-purple-600" }].map((s, idx) => (<div key={idx} className={`${cardClass} rounded-2xl p-4 shadow-sm border`}><div className="flex items-center gap-3"><div className={`p-3 ${s.bg} rounded-xl`}><Icon name={s.icon} className={`w-5 h-5 ${s.color}`} /></div><div><p className={`text-xl font-bold ${textPrimary}`}>{s.count}</p><p className={`text-xs ${textSecondary} font-medium uppercase tracking-widest`}>{s.label}</p></div></div></div>))}
       </div>
       <div className={`${cardClass} rounded-2xl shadow-sm border overflow-hidden`}>
         <div className={`p-6 border-b ${borderColor}`}>

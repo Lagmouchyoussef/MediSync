@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useTheme, mockPatients } from "./DoctorShared";
+import { useTheme, mockPatients, getPatientId } from "./DoctorShared";
 import { Icon, Modal, Badge, SearchInput } from "./DoctorUI";
 
 export default function Patients({ patients, setPatients }) {
@@ -19,13 +19,11 @@ export default function Patients({ patients, setPatients }) {
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.phone.includes(searchTerm) || 
     p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    `PAT-${new Date(p.date).getFullYear()}-${String(p.id).padStart(4, "0")}`.includes(searchTerm)
+    `PAT-${String(p.id).padStart(4, "0")}-${new Date(p.date).getFullYear()}`.includes(searchTerm)
   ), [patients, searchTerm]);
 
   const paginatedPatients = filteredPatients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
-
-  const getPatientId = (p) => `PAT-${new Date(p.date).getFullYear()}-${String(p.id).padStart(4, "0")}`;
 
   const handleSubmit = (e) => {
     e.preventDefault();

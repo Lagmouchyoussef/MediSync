@@ -5,6 +5,11 @@ export const useTheme = () => useContext(ThemeContext);
 
 export const COLORS = ["#2da0a8", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
+export const getPatientId = (p) => {
+  if (!p) return "";
+  return `PAT-${String(p.id).padStart(4, "0")}-${new Date(p.date || new Date()).getFullYear()}`;
+};
+
 export const mockPatients = [
   { id: 1, name: "Ahmed Benali", age: 45, gender: "Male", phone: "0612345678", email: "ahmed@email.com", address: "Casablanca", date: "2024-01-15", status: "Active", bloodType: "A+", lastVisit: "2025-12-10" },
   { id: 2, name: "Fatima Zahra", age: 32, gender: "Female", phone: "0698765432", email: "fatima@email.com", address: "Rabat", date: "2024-02-20", status: "Active", bloodType: "O+", lastVisit: "2025-11-28" },
