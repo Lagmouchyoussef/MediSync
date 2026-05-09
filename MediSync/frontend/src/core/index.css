@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2da0a8;
+  --color-primary-dark: #257a80;
+  --color-primary-light: #5fc3cb;
+  --color-accent: #5c6bc0;
+  --color-medical-bg: #f4f7fb;
+  --font-montserrat: 'Montserrat', sans-serif;
+  --font-outfit: 'Outfit', sans-serif;
+}
+
+@layer base {
+  * {
+    @apply font-outfit transition-colors duration-200;
+  }
+
+  body {
+    @apply bg-medical-bg text-slate-800 antialiased;
+  }
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl rounded-2xl;
+}
+
+.glass-card {
+  @apply bg-white/80 backdrop-blur-sm border border-white/40 shadow-sm rounded-xl;
+}
+
+/* Login Animations */
+.login-container {
+  @apply relative overflow-hidden bg-white rounded-[30px] shadow-2xl w-[768px] max-w-full min-h-[520px];
+}
+
+.medical-gradient-bg {
+  @apply fixed inset-0 -z-10;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(45, 160, 168, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(92, 107, 192, 0.15) 0%, transparent 50%),
+    linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Existing utility overrides for compatibility with previous code */
+.btn-primary {
+  @apply bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-all active:scale-95 shadow-md hover:shadow-lg;
+}
+
+.input-base {
+  @apply bg-slate-50 border border-slate-200 px-4 py-3 rounded-xl text-sm outline-none focus:border-primary focus:bg-white transition-all w-full;
+}
+
+.sidebar-link {
+  @apply flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-medium text-sm cursor-pointer transition-all hover:bg-primary/10 hover:text-primary;
+}
+
+.sidebar-link.active {
+  @apply bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20;
+}
+
+/* Reverting to previous sliding login styles */
+.login-container {
+  position: relative;
+  overflow: hidden;
+  width: 768px;
+  max-width: 100%;
+  min-height: 520px;
+  background-color: #fff;
+  border-radius: 30px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.35);
+}
+
+.form-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: all 0.6s ease-in-out;
+}
+
+.sign-in {
+  left: 0;
+  width: 50%;
+  z-index: 2;
+}
+
+.login-container.active .sign-in {
+  transform: translateX(100%);
+}
+
+.sign-up {
+  left: 0;
+  width: 50%;
+  opacity: 0;
+  z-index: 1;
+}
+
+.login-container.active .sign-up {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: move 0.6s;
+}
+
+@keyframes move {
+  0%, 49.99% { opacity: 0; z-index: 1; }
+  50%, 100% { opacity: 1; z-index: 5; }
+}
+
+.toggle-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  transition: all 0.6s ease-in-out;
+  border-radius: 150px 0 0 100px;
+  z-index: 1000;
+}
+
+.login-container.active .toggle-container {
+  transform: translateX(-100%);
+  border-radius: 0 150px 100px 0;
+}
+
+.toggle {
+  background: linear-gradient(to right, #5c6bc0, #2da0a8);
+  color: #fff;
+  position: relative;
+  left: -100%;
+  height: 100%;
+  width: 200%;
+  transform: translateX(0);
+  transition: all 0.6s ease-in-out;
+}
+
+.login-container.active .toggle {
+  transform: translateX(50%);
+}
+
+.toggle-panel {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 0 30px;
+  text-align: center;
+  top: 0;
+  transform: translateX(0);
+  transition: all 0.6s ease-in-out;
+}
+
+.toggle-left {
+  transform: translateX(-200%);
+}
+
+.login-container.active .toggle-left {
+  transform: translateX(0);
+}
+
+.toggle-right {
+  right: 0;
+  transform: translateX(0);
+}
+
+.login-container.active .toggle-right {
+  transform: translateX(200%);
+}
+
+/* Reverting role-pill design */
+.role-pill {
+  background-color: #eee;
+  padding: 10px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 13px;
+  border: 2px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.role-pill.active {
+  background-color: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 8px rgba(45, 160, 168, 0.3);
+}
+
+
