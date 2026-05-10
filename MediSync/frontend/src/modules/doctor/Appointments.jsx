@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTheme, mockPatients, getPatientId } from "./DoctorShared";
 import { Icon, Badge, Modal } from "./DoctorUI";
 
-export default function Appointments() {
+export default function Appointments({ activeTab: externalActiveTab, setActiveTab: setExternalActiveTab, invitations = [], setInvitations }) {
   const { dark } = useTheme();
   
   // State for Availability
@@ -21,15 +21,11 @@ export default function Appointments() {
   
   const [showPreview, setShowPreview] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState(null);
-  const [activeTab, setActiveTab] = useState("manage");
-
-  // Mock Invitation History
-  const [invitations, setInvitations] = useState([
-    { id: 1, direction: "sent", patient: "Ahmed Benali", date: "2026-05-12", time: "10:00 AM", type: "General Consultation", status: "Pending" },
-    { id: 2, direction: "received", patient: "Nadia Filali", date: "2026-05-14", time: "02:30 PM", type: "Follow-up", status: "Accepted" },
-    { id: 3, direction: "sent", patient: "Sara Moussaoui", date: "2026-05-15", time: "09:00 AM", type: "Specialist Visit", status: "Declined" },
-    { id: 4, direction: "received", patient: "Karim Tazi", date: "2026-05-16", time: "11:00 AM", type: "Routine Checkup", status: "Pending" },
-  ]);
+  
+  // Support both controlled and uncontrolled usage
+  const [localActiveTab, setLocalActiveTab] = useState("manage");
+  const activeTab = externalActiveTab !== undefined ? externalActiveTab : localActiveTab;
+  const setActiveTab = setExternalActiveTab || setLocalActiveTab;
 
   const updateStatus = (id, newStatus) => {
     setInvitations(prev => prev.map(inv => inv.id === id ? { ...inv, status: newStatus } : inv));
@@ -76,13 +72,22 @@ export default function Appointments() {
           
           <button 
             onClick={() => setActiveTab("history")}
-            className={`pb-4 text-sm font-black uppercase tracking-widest transition-all relative ${
+            className={`pb-4 text-sm font-black uppercase tracking-widest transition-all relative flex items-center gap-2 ${
               activeTab === "history" 
                 ? "text-[#2da0a8]" 
                 : `${dark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`
             }`}
           >
             Invitation History
+            {invitations && invitations.length > 0 && (
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black transition-colors ${
+                activeTab === "history" 
+                  ? "bg-[#2da0a8] text-white" 
+                  : dark ? "bg-slate-800 text-slate-400" : "bg-slate-200 text-slate-500"
+              }`}>
+                {invitations.length}
+              </span>
+            )}
             {activeTab === "history" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2da0a8] rounded-t-full shadow-[0_-2px_8px_rgba(45,160,168,0.5)]"></div>
             )}

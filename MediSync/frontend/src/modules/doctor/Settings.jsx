@@ -6,6 +6,15 @@ import { Icon } from "./DoctorUI";
 export default function Settings() {
   const { dark } = useTheme();
   const [settings, setSettings] = useState({ 
+    firstName: "Hassan",
+    lastName: "Amrani",
+    profileEmail: "hassan.amrani@example.com",
+    profilePhone: "+212 600 123 456",
+    dob: "",
+    profileAddress: "456 Avenue des FAR, Casablanca",
+    emergencyContact: "Amina Amrani",
+    emergencyPhone: "+212 611 123 456",
+    specialty: "General Practitioner",
     clinicName: "Al Amal Clinic", 
     address: "123 Boulevard Mohammed V, Casablanca", 
     phone: "+212 522 123 456", 
@@ -17,7 +26,7 @@ export default function Settings() {
     smsNotifications: false, 
     autoBackup: true 
   });
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
   
   const handleSave = () => { 
@@ -25,8 +34,34 @@ export default function Settings() {
     setTimeout(() => setSaved(false), 2000); 
   };
 
+  const handleDeleteAccount = async () => {
+    if (window.confirm("Are you sure you want to delete your account? This action is irreversible.")) {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:8000/api/auth/delete-account/", {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Token ${token}`
+          }
+        });
+        
+        if (res.ok) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/";
+        } else {
+          alert("Failed to delete account. Please try again.");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("An error occurred while deleting your account.");
+      }
+    }
+  };
+
   const tabs = [
-    { id: "general", label: "General", icon: "settings" }, 
+    { id: "profile", label: "My Profile", icon: "user" },
+    { id: "general", label: "Clinic Options", icon: "settings" }, 
     { id: "notifications", label: "Notifications", icon: "bell" }, 
     { id: "security", label: "Security", icon: "eye" }
   ];
@@ -67,6 +102,49 @@ export default function Settings() {
         </div>
 
         <div className="flex-1 p-8">
+          {activeTab === "profile" && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-8">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-[#2da0a8] to-blue-600 flex items-center justify-center text-3xl font-black text-white shadow-xl shadow-teal-500/20">
+                    {settings.firstName.charAt(0)}{settings.lastName.charAt(0)}
+                  </div>
+                  <button className="absolute -bottom-2 -right-2 p-2.5 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <Icon name="edit" className={`w-4 h-4 ${dark ? "text-slate-400" : "text-slate-500"}`} />
+                  </button>
+                </div>
+                <div className="text-center md:text-left flex-1 mt-2">
+                  <h3 className={`text-2xl font-black ${textPrimary}`}>Dr. {settings.firstName} {settings.lastName}</h3>
+                  <p className={`text-sm font-bold uppercase tracking-widest mt-1 ${dark ? "text-[#2da0a8]" : "text-teal-600"}`}>{settings.specialty}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>First Name</label><input type="text" placeholder="Enter your first name" value={settings.firstName} onChange={(e) => setSettings({ ...settings, firstName: e.target.value })} className={inputClass} /></div>
+                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Last Name</label><input type="text" placeholder="Enter your last name" value={settings.lastName} onChange={(e) => setSettings({ ...settings, lastName: e.target.value })} className={inputClass} /></div>
+                
+                <div className="md:col-span-2">
+                  <label className={`block text-xs font-black uppercase tracking-widest mb-1 ${dark ? "text-slate-500" : "text-slate-400"}`}>Email Address</label>
+                  <p className={`text-[10px] mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Used for important communications</p>
+                  <input type="email" placeholder="Enter your email address" value={settings.profileEmail} onChange={(e) => setSettings({ ...settings, profileEmail: e.target.value })} className={inputClass} />
+                </div>
+
+                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Phone</label><input type="tel" placeholder="Enter your phone number" value={settings.profilePhone} onChange={(e) => setSettings({ ...settings, profilePhone: e.target.value })} className={inputClass} /></div>
+                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Date of Birth</label><input type="date" placeholder="jj/mm/aaaa" value={settings.dob} onChange={(e) => setSettings({ ...settings, dob: e.target.value })} className={inputClass} /></div>
+                
+                <div className="md:col-span-2"><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Address</label><input type="text" placeholder="Enter your address" value={settings.profileAddress} onChange={(e) => setSettings({ ...settings, profileAddress: e.target.value })} className={inputClass} /></div>
+                
+                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Emergency Contact</label><input type="text" placeholder="Enter emergency contact name" value={settings.emergencyContact} onChange={(e) => setSettings({ ...settings, emergencyContact: e.target.value })} className={inputClass} /></div>
+                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Emergency Phone</label><input type="tel" placeholder="Enter emergency phone number" value={settings.emergencyPhone} onChange={(e) => setSettings({ ...settings, emergencyPhone: e.target.value })} className={inputClass} /></div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-6 border-t border-slate-800/10">
+                <button className={`px-6 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-800 hover:bg-slate-900 text-slate-400" : "border-slate-200 hover:bg-slate-50 text-slate-500"}`}>Cancel</button>
+                <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Saved !" : "Save Profile"}</button>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === "general" && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -100,23 +178,76 @@ export default function Settings() {
 
           {activeTab === "security" && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className={`p-6 rounded-2xl border ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
-                <h3 className={`font-bold mb-4 flex items-center gap-2 ${textPrimary}`}><Icon name="eye" className="w-4 h-4" /> Change Password</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <input type="password" placeholder="Current password" className={inputClass} />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="password" placeholder="New password" className={inputClass} />
-                    <input type="password" placeholder="Confirm new password" className={inputClass} />
-                  </div>
+              
+              {/* Password Section */}
+              <div className={`p-6 rounded-2xl border flex items-center justify-between ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+                <div>
+                  <h3 className={`font-bold text-base ${textPrimary}`}>Password</h3>
+                  <p className={`text-xs mt-1 ${textSecondary}`}>Last changed: 3 months ago</p>
                 </div>
-                <button className="mt-6 px-6 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">Update Password</button>
+                <button className={`px-5 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-100 text-slate-700"}`}>
+                  Change Password
+                </button>
               </div>
+
+              {/* Two-Factor Authentication */}
+              <div className={`p-6 rounded-2xl border flex items-center justify-between ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+                <div>
+                  <h3 className={`font-bold text-base ${textPrimary}`}>Two-Factor Authentication</h3>
+                  <p className={`text-xs mt-1 ${textSecondary}`}>Recommended for maximum security</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs font-bold uppercase tracking-widest ${dark ? "text-emerald-400" : "text-emerald-600"}`}>2FA enabled</span>
+                  <button className={`relative w-12 h-6 rounded-full transition-colors bg-[#2da0a8]`}>
+                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-lg transition-transform translate-x-6`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Active Sessions */}
+              <div className={`p-6 rounded-2xl border ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+                <h3 className={`font-bold text-base mb-4 ${textPrimary}`}>Active Sessions</h3>
+                <div className="space-y-4">
+                  
+                  {/* Current Browser */}
+                  <div className={`flex items-center justify-between pb-4 border-b ${dark ? "border-slate-800" : "border-slate-200"}`}>
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
+                        <Icon name="dashboard" className="w-5 h-5 text-[#2da0a8]" />
+                      </div>
+                      <div>
+                        <p className={`font-bold text-sm ${textPrimary}`}>Current browser</p>
+                        <p className={`text-xs mt-0.5 ${textSecondary}`}>Chrome on Windows • Paris, France</p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg">Active</span>
+                  </div>
+
+                  {/* Mobile App */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
+                        <Icon name="appointments" className={`w-5 h-5 ${textSecondary}`} />
+                      </div>
+                      <div>
+                        <p className={`font-bold text-sm ${textPrimary}`}>Mobile App</p>
+                        <p className={`text-xs mt-0.5 ${textSecondary}`}>iOS • Paris, France</p>
+                      </div>
+                    </div>
+                    <button className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${dark ? "text-slate-400 hover:text-rose-400 hover:bg-rose-500/10" : "text-slate-500 hover:text-rose-600 hover:bg-rose-50"}`}>
+                      Revoke
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* Danger Zone */}
               <div className={`p-6 rounded-2xl border ${dark ? "bg-red-900/5 border-red-900/20" : "bg-red-50 border-red-100"}`}>
                 <h3 className={`font-bold mb-2 flex items-center gap-2 ${dark ? "text-red-400" : "text-red-800"}`}><Icon name="alert" className="w-4 h-4" /> Danger Zone</h3>
-                <p className={`text-xs mb-6 ${dark ? "text-red-900/60" : "text-red-600"}`}>These actions are irreversible. Please proceed with caution.</p>
+                <p className={`text-xs mb-6 ${dark ? "text-red-900/60" : "text-red-600"}`}>This action is irreversible and will delete all your data.</p>
                 <div className="flex flex-wrap gap-3">
-                  <button className={`px-6 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-red-900/50 text-red-400 hover:bg-red-900/20" : "border-red-200 text-red-600 hover:bg-red-100"}`}>Reset All Data</button>
-                  <button className="px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-bold text-sm">Delete Account</button>
+                  <button onClick={handleDeleteAccount} className="px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-bold text-sm">Delete Account</button>
                 </div>
               </div>
             </motion.div>

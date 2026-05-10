@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useTheme, mockPatients, getPatientId } from "./DoctorShared";
 import { Icon, Modal, Badge, SearchInput } from "./DoctorUI";
 
-export default function Patients({ patients, setPatients }) {
+export default function Patients({ patients, setPatients, setDeletedPatients }) {
   const { dark } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -57,6 +57,12 @@ export default function Patients({ patients, setPatients }) {
   };
 
   const handleDelete = (id) => { 
+    // Find the patient to delete and add to deleted list
+    const patientToDelete = patients.find(p => String(p.id) === String(id));
+    if (patientToDelete && setDeletedPatients) {
+      setDeletedPatients(prev => [...prev, { ...patientToDelete, deletedAt: new Date().toISOString() }]);
+    }
+    
     // Use functional update to ensure we have the latest state
     setPatients(prev => prev.filter((p) => String(p.id) !== String(id)));
     setSelectedIds(prev => prev.filter(sId => String(sId) !== String(id)));
@@ -64,6 +70,15 @@ export default function Patients({ patients, setPatients }) {
 
   const handleBulkDelete = () => {
     if (selectedIds.length === 0) return;
+    
+    // Find patients to delete and add to deleted list
+    const patientsToDelete = patients.filter(p => selectedIds.map(String).includes(String(p.id)));
+    if (patientsToDelete.length > 0 && setDeletedPatients) {
+      setDeletedPatients(prev => [
+        ...prev, 
+        ...patientsToDelete.map(p => ({ ...p, deletedAt: new Date().toISOString() }))
+      ]);
+    }
     
     setPatients(prev => prev.filter(p => !selectedIds.map(String).includes(String(p.id))));
     setSelectedIds([]);

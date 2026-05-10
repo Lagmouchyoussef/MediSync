@@ -58,6 +58,37 @@ export default function DoctorDashboard() {
 
   // Global state for patients to persist changes
   const [patients, setPatients] = useState(mockPatients);
+  const [deletedPatients, setDeletedPatients] = useState([]);
+  
+  // Navigation states
+  const [expandedNav, setExpandedNav] = useState(null);
+  const [appointmentsTab, setAppointmentsTab] = useState("manage");
+
+  // Invitations state
+  const [invitations, setInvitations] = useState([
+    { id: 1, direction: "sent", patient: "Ahmed Benali", date: "2026-05-12", time: "10:00 AM", type: "General Consultation", status: "Pending" },
+    { id: 2, direction: "received", patient: "Nadia Filali", date: "2026-05-14", time: "02:30 PM", type: "Follow-up", status: "Accepted" },
+    { id: 3, direction: "sent", patient: "Sara Moussaoui", date: "2026-05-15", time: "09:00 AM", type: "Specialist Visit", status: "Declined" },
+    { id: 4, direction: "received", patient: "Karim Tazi", date: "2026-05-16", time: "11:00 AM", type: "Routine Checkup", status: "Pending" },
+  ]);
+
+  // History state
+  const [history, setHistory] = useState([
+    { id: 1, type: "Consultation", patient: "Ahmed Benali", user: "Dr. Hassan Amrani", date: "2026-05-10", time: "09:15", description: "Monthly follow-up consultation - Hypertension", category: "medical" },
+    { id: 2, type: "Patient added", patient: "Nadia Filali", user: "Administrator", date: "2026-05-10", time: "08:45", description: "New patient registered in the system", category: "admin" },
+    { id: 3, type: "Appointment", patient: "Fatima Zahra", user: "Dr. Leila Berrada", date: "2026-05-09", time: "16:30", description: "Appointment confirmed for exam - Full blood test", category: "appointment" },
+    { id: 4, type: "Modification", patient: "Sara Moussaoui", user: "Dr. Hassan Amrani", date: "2026-05-09", time: "14:20", description: "Medical record update - New diagnosis diabetes type 2", category: "medical" },
+    { id: 5, type: "Cancellation", patient: "Karim Bennani", user: "Dr. Rachid Tazi", date: "2026-05-09", time: "11:00", description: "Appointment cancelled by patient - Reschedule requested", category: "appointment" },
+    { id: 6, type: "Consultation", patient: "Omar Idrissi", user: "Dr. Rachid Tazi", date: "2026-05-08", time: "15:45", description: "Diabetes control - HbA1c results: 7.2%", category: "medical" },
+    { id: 7, type: "Export", patient: "All", user: "Administrator", date: "2026-05-08", time: "09:00", description: "Export of April data in PDF", category: "admin" },
+    { id: 8, type: "Consultation", patient: "Khadija Tazi", user: "Dr. Leila Berrada", date: "2026-05-07", time: "10:30", description: "First visit - Complete health checkup", category: "medical" },
+    { id: 9, type: "Appointment", patient: "Ahmed Benali", user: "Administrator", date: "2026-05-07", time: "08:15", description: "New appointment scheduled for 15/05", category: "appointment" },
+    { id: 10, type: "Modification", patient: "Youssef El Amrani", user: "Administrator", date: "2026-05-06", time: "17:00", description: "Patient status change: Active → Inactive", category: "admin" },
+    { id: 11, type: "Consultation", patient: "Fatima Zahra", user: "Dr. Leila Berrada", date: "2026-05-06", time: "11:00", description: "Anemia treatment follow-up - Improvement noted", category: "medical" },
+    { id: 12, type: "Login", patient: "-", user: "Dr. Hassan Amrani", date: "2026-05-06", time: "07:45", description: "Logged into system from IP address 192.168.1.100", category: "security" },
+    { id: 13, type: "Alert", patient: "System", user: "System", date: "2026-05-06", time: "06:00", description: "System backup completed successfully", category: "notification" },
+    { id: 14, type: "Reminder", patient: "Ahmed Benali", user: "System", date: "2026-05-05", time: "09:00", description: "Automated SMS reminder sent for tomorrow's appointment", category: "notification" },
+  ]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -79,13 +110,22 @@ export default function DoctorDashboard() {
       title: "Clinical",
       items: [
         { id: "patients", label: "Patients", icon: "patients", badge: patients.length },
-        { id: "appointments", label: "Availability", icon: "appointments", badge: mockAppointments.filter((a) => a.status === "Pending").length },
+        { 
+          id: "appointments", 
+          label: "Availability", 
+          icon: "appointments", 
+          badge: mockAppointments.filter((a) => a.status === "Pending").length,
+          subItems: [
+            { id: "manage", label: "Manage Setup" },
+            { id: "history", label: "Invitation History", badge: invitations.length }
+          ]
+        },
       ]
     },
     {
       title: "Administration",
       items: [
-        { id: "history", label: "Activity", icon: "history", badge: null },
+        { id: "history", label: "Activity", icon: "history", badge: history.length },
         { id: "settings", label: "Configuration", icon: "settings", badge: null },
       ]
     }
@@ -94,9 +134,9 @@ export default function DoctorDashboard() {
   const renderPage = () => {
     switch (activePage) {
       case "dashboard": return <Dashboard />;
-      case "patients": return <Patients patients={patients} setPatients={setPatients} />;
-      case "appointments": return <Appointments />;
-      case "history": return <History />;
+      case "patients": return <Patients patients={patients} setPatients={setPatients} setDeletedPatients={setDeletedPatients} />;
+      case "appointments": return <Appointments activeTab={appointmentsTab} setActiveTab={setAppointmentsTab} invitations={invitations} setInvitations={setInvitations} />;
+      case "history": return <History deletedPatients={deletedPatients} setDeletedPatients={setDeletedPatients} setPatients={setPatients} history={history} setHistory={setHistory} />;
       case "settings": return <Settings />;
       default: return <Dashboard />;
     }
@@ -136,33 +176,94 @@ export default function DoctorDashboard() {
                 <div className="space-y-1.5">
                   {section.items.map((item) => {
                     const isActive = activePage === item.id;
+                    const hasSubItems = !!item.subItems;
+                    const isExpanded = expandedNav === item.id;
+
                     return (
-                      <button 
-                        key={item.id} 
-                        onClick={() => setActivePage(item.id)} 
-                        className={`w-full group flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-bold transition-all duration-300 relative overflow-hidden ${
-                          isActive 
-                            ? "bg-gradient-to-r from-[#2da0a8] to-[#20838a] text-white shadow-lg shadow-[#2da0a8]/25" 
-                            : `${darkMode ? "text-slate-400 hover:text-white hover:bg-slate-800/50" : "text-slate-500 hover:text-[#2da0a8] hover:bg-slate-50"}`
-                        }`}
-                      >
-                        {/* Hover accent line */}
-                        {!isActive && (
-                          <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-[#2da0a8] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300`}></div>
-                        )}
-                        
-                        <div className={`${isActive ? "text-white" : darkMode ? "text-slate-500 group-hover:text-white" : "text-slate-400 group-hover:text-[#2da0a8]"} transition-colors duration-300`}>
-                          <Icon name={item.icon} className="w-6 h-6" />
-                        </div>
-                        
-                        <span className="flex-1 text-left transform group-hover:translate-x-1 transition-transform duration-300">{item.label}</span>
-                        
-                        {item.badge && item.badge > 0 && (
-                          <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black shadow-sm transition-all duration-300 ${isActive ? "bg-white/20 text-white backdrop-blur-sm" : darkMode ? "bg-slate-800 text-slate-300" : "bg-[#2da0a8]/10 text-[#2da0a8]"}`}>
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
+                      <div key={item.id} className="space-y-1">
+                        <button 
+                          onClick={() => {
+                            if (hasSubItems) {
+                              setExpandedNav(isExpanded ? null : item.id);
+                              setActivePage(item.id);
+                            } else {
+                              setActivePage(item.id);
+                              setExpandedNav(null);
+                            }
+                          }} 
+                          className={`w-full group flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-bold transition-all duration-300 relative overflow-hidden ${
+                            isActive && !hasSubItems
+                              ? "bg-gradient-to-r from-[#2da0a8] to-[#20838a] text-white shadow-lg shadow-[#2da0a8]/25" 
+                              : isActive && hasSubItems
+                                ? `${darkMode ? "bg-slate-800 text-white" : "bg-[#2da0a8]/10 text-[#2da0a8]"}`
+                                : `${darkMode ? "text-slate-400 hover:text-white hover:bg-slate-800/50" : "text-slate-500 hover:text-[#2da0a8] hover:bg-slate-50"}`
+                          }`}
+                        >
+                          {/* Hover accent line */}
+                          {!isActive && (
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-[#2da0a8] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300`}></div>
+                          )}
+                          
+                          <div className={`${isActive ? (hasSubItems ? "text-[#2da0a8]" : "text-white") : darkMode ? "text-slate-500 group-hover:text-white" : "text-slate-400 group-hover:text-[#2da0a8]"} transition-colors duration-300`}>
+                            <Icon name={item.icon} className="w-6 h-6" />
+                          </div>
+                          
+                          <span className="flex-1 text-left transform group-hover:translate-x-1 transition-transform duration-300">{item.label}</span>
+                          
+                          {item.badge && item.badge > 0 && !hasSubItems && (
+                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black shadow-sm transition-all duration-300 ${isActive ? "bg-white/20 text-white backdrop-blur-sm" : darkMode ? "bg-slate-800 text-slate-300" : "bg-[#2da0a8]/10 text-[#2da0a8]"}`}>
+                              {item.badge}
+                            </span>
+                          )}
+
+                          {hasSubItems && (
+                            <div className={`transition-transform duration-300 ${isExpanded ? "rotate-90" : ""}`}>
+                              <Icon name="chevronRight" className={`w-4 h-4 ${isActive ? "text-[#2da0a8]" : darkMode ? "text-slate-500" : "text-slate-400"}`} />
+                            </div>
+                          )}
+                        </button>
+
+                        <AnimatePresence>
+                          {hasSubItems && isExpanded && (
+                            <motion.div 
+                              initial={{ height: 0, opacity: 0 }} 
+                              animate={{ height: "auto", opacity: 1 }} 
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className={`ml-11 pl-4 border-l-2 space-y-1 py-1 ${darkMode ? "border-slate-800" : "border-slate-100"}`}>
+                                {item.subItems.map(sub => {
+                                  const isSubActive = appointmentsTab === sub.id;
+                                  return (
+                                    <button 
+                                      key={sub.id}
+                                      onClick={() => {
+                                        setActivePage(item.id);
+                                        if (item.id === "appointments") {
+                                          setAppointmentsTab(sub.id);
+                                        }
+                                        setMobileMenuOpen(false);
+                                      }}
+                                      className={`w-full text-left px-3 py-2 rounded-lg text-[13px] font-bold transition-all duration-300 flex items-center justify-between ${
+                                        isSubActive 
+                                          ? `${darkMode ? "text-white bg-slate-800" : "text-[#2da0a8] bg-[#2da0a8]/10"}` 
+                                          : `${darkMode ? "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50" : "text-slate-500 hover:text-[#2da0a8] hover:bg-slate-50"}`
+                                      }`}
+                                    >
+                                      <span>{sub.label}</span>
+                                      {sub.badge !== undefined && sub.badge > 0 && (
+                                        <span className={`px-1.5 py-0.5 rounded-md text-[9px] font-black ${isSubActive ? "bg-[#2da0a8] text-white" : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400"}`}>
+                                          {sub.badge}
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     );
                   })}
                 </div>
