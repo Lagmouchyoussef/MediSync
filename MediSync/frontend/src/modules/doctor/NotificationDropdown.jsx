@@ -15,20 +15,82 @@ export default function NotificationDropdown({ notifications, onMarkRead, onMark
     <AnimatePresence>
       {isOpen && (<>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40" onClick={onClose} />
-        <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.15 }} className={`absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] ${dark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-100"} rounded-2xl shadow-2xl border z-50 overflow-hidden`}>
-          <div className="bg-gradient-to-r from-[#2da0a8] to-[#258a91] px-5 py-4">
+        <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} transition={{ duration: 0.15 }} className={`absolute right-0 top-full mt-2 w-96 max-w-[calc(100vw-2rem)] ${dark ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-slate-100"} rounded-2xl shadow-2xl border z-50 overflow-hidden`}>
+          <div className="bg-gradient-to-r from-[#2da0a8] to-[#20838a] px-5 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3"><div className="p-2 bg-white bg-opacity-20 rounded-xl"><Icon name="bell" className="w-5 h-5 text-white" /></div><div><h3 className="text-white font-bold text-lg">Notifications</h3><p className="text-blue-200 text-xs">{unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All up to date!"}</p></div></div>
-              {unreadCount > 0 && (<button onClick={onMarkAllRead} className="flex items-center gap-1.5 px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-white text-xs font-medium transition-colors"><Icon name="checkAll" className="w-3.5 h-3.5" />Mark All Read</button>)}
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
+                  <Icon name="bell" className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-bold text-lg leading-tight">Notifications</h3>
+                  <p className="text-teal-50/70 text-[11px] font-medium">
+                    {unreadCount > 0 ? `${unreadCount} notifications non lues` : "Tout est à jour !"}
+                  </p>
+                </div>
+              </div>
+              {unreadCount > 0 && (
+                <button onClick={onMarkAllRead} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-white text-[10px] font-black uppercase tracking-wider transition-all">
+                  Marquer tout comme lu
+                </button>
+              )}
             </div>
           </div>
           <div className="max-h-96 overflow-y-auto">
-            {notifications.length === 0 ? (<div className="py-12 text-center"><div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${dark ? "bg-gray-700" : "bg-gray-100"}`}><Icon name="bell" className={`w-8 h-8 ${dark ? "text-gray-500" : "text-gray-300"}`} /></div><p className={textSecondary}>No notifications</p></div>) : notifications.map((notif) => (<motion.div key={notif.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className={`relative border-b transition-colors hover:bg-opacity-50 ${dark ? "border-gray-700 hover:bg-gray-700" : "border-gray-50 hover:bg-gray-50"} ${notif.read ? "opacity-70" : ""}`}>
-              {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2da0a8] rounded-r-full" />}
-              <div className="p-4 pl-5"><div className="flex gap-3"><div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getNotifColor(notif.type)}`}><Icon name={getNotifIcon(notif.type)} className="w-5 h-5" /></div><div className="flex-1 min-w-0"><p className={`text-sm ${notif.read ? textSecondary : `${textPrimary} font-semibold`}`}>{notif.title}</p><p className={`text-xs mt-0.5 leading-relaxed ${dark ? "text-gray-400" : "text-gray-500"}`}>{notif.message}</p><p className={`text-xs mt-1 ${dark ? "text-gray-500" : "text-gray-400"}`}>{getTimeAgo(notif.date)}</p></div></div><div className="flex gap-2 mt-2 pl-13">{!notif.read && (<button onClick={() => onMarkRead(notif.id)} className="text-xs text-[#2da0a8] hover:text-[#258a91] font-medium flex items-center gap-1 transition-colors"><Icon name="markRead" className="w-3.5 h-3.5" />Mark as read</button>)}<button onClick={() => onDismiss(notif.id)} className={`text-xs font-medium flex items-center gap-1 transition-colors ml-auto ${dark ? "text-gray-500 hover:text-red-400" : "text-gray-400 hover:text-red-500"}`}><Icon name="close" className="w-3.5 h-3.5" /></button></div></div>
-            </motion.div>))}
+            {notifications.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${dark ? "bg-slate-900" : "bg-slate-50"}`}>
+                  <Icon name="bell" className={`w-8 h-8 ${dark ? "text-slate-700" : "text-slate-200"}`} />
+                </div>
+                <p className={textSecondary}>Aucune notification</p>
+              </div>
+            ) : (
+              notifications.map((notif) => (
+                <motion.div 
+                  key={notif.id} 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: "auto" }} 
+                  className={`relative border-b transition-all duration-300 ${dark ? "border-slate-800/50 hover:bg-slate-900/50" : "border-slate-50 hover:bg-slate-50/50"} ${notif.read ? "opacity-60" : ""}`}
+                >
+                  {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2da0a8] rounded-r-full shadow-[2px_0_8px_rgba(45,160,168,0.4)]" />}
+                  <div className="p-4 pl-5">
+                    <div className="flex gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${getNotifColor(notif.type)}`}>
+                        <Icon name={getNotifIcon(notif.type)} className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm ${notif.read ? textSecondary : `${textPrimary} font-bold`}`}>{notif.title}</p>
+                        <p className={`text-[11px] mt-0.5 leading-relaxed ${dark ? "text-slate-500" : "text-slate-500"}`}>{notif.message}</p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <p className={`text-[10px] font-medium ${dark ? "text-slate-600" : "text-slate-400"}`}>{getTimeAgo(notif.date)}</p>
+                          {!notif.read && <span className="w-1 h-1 bg-[#2da0a8] rounded-full"></span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-3 pl-13">
+                      {!notif.read && (
+                        <button onClick={() => onMarkRead(notif.id)} className="text-[11px] text-[#2da0a8] hover:text-[#20838a] font-bold flex items-center gap-1.5 transition-colors uppercase tracking-wider">
+                          <Icon name="checkAll" className="w-3.5 h-3.5" />
+                          Marquer comme lu
+                        </button>
+                      )}
+                      <button onClick={() => onDismiss(notif.id)} className={`text-[11px] font-bold flex items-center gap-1.5 transition-colors ml-auto uppercase tracking-wider ${dark ? "text-slate-600 hover:text-rose-400" : "text-slate-400 hover:text-rose-500"}`}>
+                        <Icon name="close" className="w-3.5 h-3.5" />
+                        Masquer
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            )}
           </div>
-          {notifications.length > 0 && (<div className={`p-3 border-t text-center ${dark ? "bg-gray-700 border-gray-700" : "bg-gray-50 border-gray-100"}`}><button className="text-sm text-[#2da0a8] hover:text-[#258a91] font-medium transition-colors">See all notifications</button></div>)}
+          {notifications.length > 0 && (
+            <div className={`p-4 border-t text-center ${dark ? "bg-slate-900/50 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
+              <button className="text-xs text-[#2da0a8] hover:text-[#20838a] font-black uppercase tracking-widest transition-all">
+                Voir toutes les notifications
+              </button>
+            </div>
+          )}
         </motion.div>
       </>)}
     </AnimatePresence>
