@@ -76,7 +76,7 @@ class BrevoEmailService:
                     border-bottom: 1px solid #e2e8f0;
                 }}
                 .logo {{
-                    max-width: 180px;
+                    max-width: 140px;
                     height: auto;
                     margin-bottom: 10px;
                 }}

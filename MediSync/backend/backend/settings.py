@@ -185,11 +185,11 @@ JAZZMIN_SETTINGS = {
     "site_brand": "MediSync Management",
     "site_logo": "images/Logo_Medisync.png",
     "site_icon": "images/Logo_Medisync.png",
-    "site_logo_classes": "img-circle",
+    "site_logo_classes": "img-fluid",
     "welcome_sign": "MediSync Administration",
     "copyright": "MediSync Clinical Systems",
     "search_model": ["authentication.User", "api.Patient", "api.Appointment"],
-    "custom_css": "admin/css/custom_admin.css",
+    "custom_css": "admin/css/custom_admin_v2.css",
     "custom_js": None,
     "show_ui_builder": False,
     "topmenu_links": [

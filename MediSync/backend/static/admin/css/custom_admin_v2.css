@@ -55,10 +55,16 @@
 .login-box .login-logo img {
     max-width: 150px !important;
     height: auto !important;
-    display: block !important;
     margin: 0 auto !important;
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
 }
+
+/* Theme-aware logo display */
+.login-logo .logo-light { display: block !important; }
+.login-logo .logo-dark { display: none !important; }
+
+html[data-bs-theme="dark"] .login-logo .logo-light { display: none !important; }
+html[data-bs-theme="dark"] .login-logo .logo-dark { display: block !important; }
 
 .brand-link img {
     max-height: 40px !important;
