@@ -278,22 +278,16 @@ class ApiService {
   }
 
   async fetchActivities() {
-    const role = this.getUserRole();
-    const prefix = role === 'doctor' ? '/doctor' : '/patient';
-    return this._authorizedRequest(`${prefix}/activities/`);
+    return this._authorizedRequest('/activities/');
   }
 
   async createActivity(action, details = "", type = "info") {
-    const role = this.getUserRole();
-    const prefix = role === 'doctor' ? '/doctor' : '/patient';
-    return this._authorizedRequest(`${prefix}/activities/`, 'POST', { action, details, type });
+    return this._authorizedRequest('/activities/', 'POST', { action, details, type });
   }
 
   async deleteActivity(id) {
     if (!id) throw new Error('Activity ID is required for deletion');
-    const role = this.getUserRole();
-    const prefix = role === 'doctor' ? '/doctor' : '/patient';
-    return this._authorizedRequest(`${prefix}/activities/${id}/`, 'DELETE');
+    return this._authorizedRequest(`/activities/${id}/`, 'DELETE');
   }
 
   async clearActivities() {
