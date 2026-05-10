@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Patient, Availability, Appointment, Activity
+from .models import Patient, Availability, Appointment, Activity, Notification
 from authentication.models import Profile
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -26,7 +26,14 @@ class ActivitySerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('user',)
 
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
+        read_only_fields = ('user',)
+
 class ProfileSerializer(serializers.ModelSerializer):
+
     first_name = serializers.CharField(source='user.first_name', read_only=True)
     last_name = serializers.CharField(source='user.last_name', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)

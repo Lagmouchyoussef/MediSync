@@ -8,6 +8,9 @@ import { Icon } from "./components/PatientUI";
 
 // Header Components
 import NotificationDropdown from "./components/NotificationDropdown";
+import apiService from "../../core/services/api";
+
+
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -23,10 +26,35 @@ export default function PatientDashboard() {
   const notifRef = useRef(null);
 
   // History State
-  const [history, setHistory] = useState([
-    { id: 101, action: "Account Created", details: "Your MediSync patient account was successfully registered.", type: "security", timestamp: new Date().toISOString() },
-    { id: 102, action: "Profile Updated", details: "You updated your contact information.", type: "admin", timestamp: new Date().toISOString() }
-  ]);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  // Appointments State
+  const [appointments, setAppointments] = useState([]);
+  const [loadingApts, setLoadingApts] = useState(true);
+
+  const fetchApts = async () => {
+    try {
+      const data = await apiService.fetchAppointments();
+      setAppointments(data || []);
+    } catch (err) {
+      console.error("Failed to fetch appointments:", err);
+    } finally {
+      setLoadingApts(false);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const data = await apiService.fetchActivities();
+      setHistory(data || []);
+    } catch (err) {
+      console.error("Failed to fetch history:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
 
   const addToHistory = (action, details, type) => {
     const newEntry = {
@@ -40,11 +68,53 @@ export default function PatientDashboard() {
   };
 
   // Notifications State
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: "system", title: "Welcome", message: "Welcome to your new MediSync patient dashboard.", date: new Date().toISOString(), read: false },
-    { id: 2, type: "security", title: "Active Session", message: "A new login was detected on this device.", date: new Date().toISOString(), read: true },
-    { id: 3, type: "appointment", title: "New Invitation", message: "Dr. Rachid Tazi sent you an appointment request.", date: new Date().toISOString(), read: false }
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(true);
+
+  const fetchNotifs = async () => {
+    try {
+      const data = await apiService.fetchNotifications();
+      // Map backend fields to frontend fields if necessary
+      const mapped = data.map(n => ({
+        id: n.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        date: n.created_at,
+        read: n.read
+      }));
+      setNotifications(mapped);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifs();
+    fetchHistory();
+    fetchApts();
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(() => {
+      fetchNotifs();
+      fetchApts();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+
+  // Show toast for new unread notifications
+  const prevNotifsRef = useRef([]);
+  useEffect(() => {
+    const unread = notifications.filter(n => !n.read);
+    const prevUnread = prevNotifsRef.current.filter(n => !n.read);
+    
+    prevNotifsRef.current = notifications;
+  }, [notifications]);
+
+
+
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -54,17 +124,33 @@ export default function PatientDashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleMarkRead = (id) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  const handleMarkRead = async (id) => {
+    try {
+      await apiService.markNotificationRead(id);
+      setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleMarkAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const handleMarkAllRead = async () => {
+    try {
+      await apiService.markAllNotificationsRead();
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleDismiss = (id) => {
-    setNotifications(notifications.filter(n => n.id !== id));
+  const handleDismiss = async (id) => {
+    try {
+      await apiService.deleteNotification(id);
+      setNotifications(notifications.filter(n => n.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
+
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -78,7 +164,7 @@ export default function PatientDashboard() {
     {
       title: "Clinical",
       items: [
-        { id: "appointments", label: "Appointments", icon: "calendar", badge: 3 },
+        { id: "appointments", label: "Appointments", icon: "calendar", badge: appointments.filter(a => a.status === 'Pending').length },
         { id: "history", label: "Health History", icon: "history", badge: history.length },
       ]
     },
@@ -94,16 +180,18 @@ export default function PatientDashboard() {
   const headerText = darkMode ? "text-slate-200" : "text-slate-800";
   const headerSubText = darkMode ? "text-slate-500" : "text-slate-400";
   const headerIconColor = darkMode ? "text-slate-400 hover:bg-slate-800" : "text-slate-600 hover:bg-slate-100";
-  const searchInputStyle = darkMode ? "bg-slate-900 border-slate-800 text-white placeholder-slate-600" : "bg-slate-100 border-slate-200 text-slate-800 placeholder-slate-400";
+  const searchInputStyle = darkMode ? "bg-slate-900 border-[#1e293b] text-white placeholder-slate-600" : "bg-slate-100 border-slate-200 text-slate-800 placeholder-slate-400";
   const bgMain = darkMode ? "bg-[#050608]" : "bg-[#f8fafc]";
+  const sidebarBg = darkMode ? "bg-[#050608] border-[#1e293b]" : "bg-white border-slate-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)]";
+
 
   const renderPage = () => {
     switch (activePage) {
-      case "dashboard": return <Dashboard onNavigate={setActivePage} />;
-      case "appointments": return <Appointments onAddToHistory={addToHistory} />;
+      case "dashboard": return <Dashboard onNavigate={setActivePage} appointments={appointments} notifications={notifications} historyCount={history.length} />;
+      case "appointments": return <Appointments onAddToHistory={addToHistory} appointments={appointments} setAppointments={setAppointments} />;
       case "history": return <HealthHistory history={history} setHistory={setHistory} />;
       case "settings": return <Configuration />;
-      default: return <Dashboard onNavigate={setActivePage} />;
+      default: return <Dashboard onNavigate={setActivePage} appointments={appointments} notifications={notifications} historyCount={history.length} />;
     }
   };
 
@@ -114,7 +202,8 @@ export default function PatientDashboard() {
         {mobileMenuOpen && <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
 
         {/* ==================== LEFT SIDEBAR ==================== */}
-        <aside className={`hidden lg:flex flex-col w-64 ${darkMode ? "bg-[#050608] border-[#1e293b]" : "bg-white border-slate-100 shadow-[4px_0_24px_rgba(0,0,0,0.02)]"} border-r z-20 transition-all duration-300 relative`}>
+        <aside className={`hidden lg:flex flex-col w-64 ${sidebarBg} border-r z-20 transition-all duration-300 relative`}>
+
           <div className="py-8 flex items-center justify-center cursor-pointer" onClick={() => setActivePage("dashboard")}>
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-r from-[#2da0a8] to-blue-500/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -172,7 +261,7 @@ export default function PatientDashboard() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-black truncate ${headerText}`}>{patientData.name}</p>
-                <p className={`text-[10px] font-black uppercase tracking-widest truncate ${headerSubText}`}>Premium Patient</p>
+                <p className={`text-[10px] font-black uppercase tracking-widest truncate ${headerSubText}`}>Patient</p>
               </div>
               <button className={`p-2.5 rounded-xl transition-all duration-300 ${darkMode ? "bg-slate-800 text-slate-400 hover:bg-red-500/10 hover:text-red-400" : "bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-500"}`} title="Logout">
                 <Icon name="logout" className="w-4 h-4" />
@@ -248,8 +337,10 @@ export default function PatientDashboard() {
               </motion.div>
             </AnimatePresence>
           </main>
-        </div>
       </div>
-    </ThemeContext.Provider>
+    </div>
+  </ThemeContext.Provider>
+
+
   );
 }

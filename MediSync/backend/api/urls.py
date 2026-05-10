@@ -2,10 +2,12 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views.health import HealthCheckView
 from .views.core import (
-    DashboardStatsView
+    DashboardStatsView, NotificationViewSet
 )
 
 router = DefaultRouter()
+router.register(r'notifications', NotificationViewSet, basename='notification')
+
 # Clinical routes moved to doctor app
 
 urlpatterns = [

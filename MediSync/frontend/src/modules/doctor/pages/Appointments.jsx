@@ -16,7 +16,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
   // State for Invitation
   const [invitationForm, setInvitationForm] = useState({
     patientId: "",
-    date: "2026-05-10",
+    date: new Date().toISOString().split('T')[0],
     time: "",
     type: "General Consultation",
     notes: ""

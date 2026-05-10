@@ -242,7 +242,25 @@ class ApiService {
     return this._authorizedRequest(`/doctor/activities/${id}/`, 'DELETE');
   }
 
+  // --- Notification Routes ---
+  async fetchNotifications() {
+    return this._authorizedRequest('/notifications/');
+  }
+
+  async markNotificationRead(id) {
+    return this._authorizedRequest(`/notifications/${id}/`, 'PATCH', { read: true });
+  }
+
+  async markAllNotificationsRead() {
+    return this._authorizedRequest('/notifications/mark_all_read/', 'POST');
+  }
+
+  async deleteNotification(id) {
+    return this._authorizedRequest(`/notifications/${id}/`, 'DELETE');
+  }
+
   // --- Helper for authorized requests ---
+
   async _authorizedRequest(endpoint, method = 'GET', body = null) {
     const token = this.getAuthToken();
     if (!token) throw new Error('Not authenticated');

@@ -156,10 +156,10 @@ export default function Patients({ patients, setPatients }) {
                   />
                 </th>
                 <th className={`text-left p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>ID & Patient</th>
-                <th className={`text-left p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>Age / Blood</th>
+                <th className={`text-left p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>Age</th>
                 <th className={`text-left p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>Contact</th>
                 <th className={`text-left p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>Address</th>
-                <th className={`text-left p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>Status</th>
+                <th className={`text-left p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>Join Date</th>
                 <th className={`text-right p-4 text-[11px] font-black uppercase tracking-widest ${textSecondary}`}>Actions</th>
               </tr>
             </thead>
@@ -188,10 +188,7 @@ export default function Patients({ patients, setPatients }) {
                       </div>
                     </td>
                     <td className="p-4">
-                      <div className="flex flex-col gap-1">
-                        <span className={`text-sm font-medium ${textPrimary}`}>{patient.age} years</span>
-                        <Badge variant="info">{patient.bloodType}</Badge>
-                      </div>
+                      <span className={`text-sm font-medium ${textPrimary}`}>{patient.age} years</span>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col">
@@ -199,9 +196,9 @@ export default function Patients({ patients, setPatients }) {
                         <span className={`text-xs ${textSecondary}`}>{patient.email}</span>
                       </div>
                     </td>
-                    <td className={`p-4 text-sm ${textSecondary}`}>{patient.address}</td>
+                    <td className={`p-4 text-sm ${textSecondary}`}>{patient.address || "N/A"}</td>
                     <td className="p-4">
-                      <Badge variant={patient.status === "Active" ? "success" : "danger"}>{patient.status}</Badge>
+                      <span className={`text-xs font-bold ${textSecondary}`}>{patient.date ? new Date(patient.date).toLocaleDateString() : "N/A"}</span>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-end gap-1">

@@ -40,16 +40,7 @@ export default function DoctorDashboard() {
     navigate('/');
   };
 
-  const [notifications, setNotifications] = useState(() => {
-    const staticNotifs = [
-      { id: 1, type: "system", title: "Bienvenue", message: "Bienvenue sur votre nouveau tableau de bord MediSync.", date: new Date().toISOString(), read: false },
-      { id: 2, type: "security", title: "Session active", message: "Une nouvelle connexion a été détectée sur cet appareil.", date: new Date().toISOString(), read: true }
-    ];
-    
-    // Filter out notifications dismissed in previous sessions
-    const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-    return staticNotifs.filter(n => !dismissedIds.includes(n.id));
-  });
+  const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const handleMarkRead = (id) => setNotifications(notifications.map((n) => n.id === id ? { ...n, read: true } : n));
@@ -127,6 +118,12 @@ export default function DoctorDashboard() {
         if (Array.isArray(activitiesData)) {
           setHistory(activitiesData);
         }
+
+        // Fetch Notifications
+        const notifsData = await apiService.fetchNotifications().catch(() => []);
+        if (Array.isArray(notifsData)) {
+          setNotifications(notifsData);
+        }
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
       }
@@ -202,6 +199,7 @@ export default function DoctorDashboard() {
           notificationsCount={nUnread}
           upcomingAppointments={safeInvs.slice(0, 5).map(i => ({ ...i, patient: i.patient_name || i.patient || "Patient" }))}
           onDeleteAppointment={handleDeleteAppointmentFromDashboard}
+          onNavigate={setActivePage}
         />
       );
       case "patients": return <Patients patients={Array.isArray(patients) ? patients : []} setPatients={setPatients} />;

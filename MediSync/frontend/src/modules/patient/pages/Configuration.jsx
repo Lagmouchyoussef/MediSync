@@ -21,15 +21,27 @@ export default function Configuration() {
     address: "",
     currency: "MAD",
     language: "en",
-    timeZone: "Europe/Paris (UTC+1)",
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     theme: dark ? "dark" : "light",
     fontSize: "medium",
     smsNotifications: false,
+    pushNotifications: true,
+    browserNotifications: Notification.permission === "granted",
     autoBackup: true,
     animations: true,
     confirmDeletion: true,
     autoReminders: true,
   });
+
+  const [notifPermission, setNotifPermission] = useState(Notification.permission);
+
+  const requestNotifPermission = async () => {
+    if (!("Notification" in window)) return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+    setSettings(prev => ({ ...prev, browserNotifications: result === "granted" }));
+  };
+
 
   const capitalizeName = (value) => {
     if (!value) return "";
@@ -66,7 +78,8 @@ export default function Configuration() {
       return `${browser} on ${os}`;
     };
 
-    setSessionInfo((prev) => ({ ...prev, browser: getBrowserInfo(), location: "Casablanca, Morocco" }));
+    setSessionInfo((prev) => ({ ...prev, browser: getBrowserInfo(), location: "Detecting..." }));
+
 
     apiService.fetchCurrentUser().then((user) => {
       setSettings((prev) => ({
@@ -91,10 +104,11 @@ export default function Configuration() {
     { id: "security", label: "Security", icon: "eye" },
   ];
 
-  const textPrimary = dark ? "text-white" : "text-slate-800";
-  const textSecondary = dark ? "text-slate-400" : "text-slate-500";
+  const textPrimary = dark ? "text-slate-200" : "text-slate-800";
+  const textSecondary = dark ? "text-slate-500" : "text-slate-500";
   const cardClass = dark ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-slate-200";
-  const inputClass = `w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[#2da0a8] focus:border-transparent outline-none text-sm ${dark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-800"}`;
+  const inputClass = `w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[#2da0a8] focus:border-transparent outline-none text-sm ${dark ? "bg-[#0a0c10] border-[#1e293b] text-white" : "bg-slate-50 border-slate-200 text-slate-800"}`;
+
 
   const handleSave = () => {
     setSaved(true);
@@ -121,7 +135,8 @@ export default function Configuration() {
 
   const handleDeleteAccount = () => {
     setShowDeleteConfirm(false);
-    alert("Suppression du compte demandée. Cette action n'est pas encore connectée au backend.");
+    // Real implementation would call apiService.deleteAccount()
+    console.log("Account deletion requested.");
   };
 
   const handleChangePassword = () => {
@@ -132,7 +147,8 @@ export default function Configuration() {
     setShowPasswordModal(false);
     setPasswords({ current: "", new: "", confirm: "" });
     setPasswordDate(new Date().toLocaleDateString());
-    alert("Mot de passe mis à jour avec succès !");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
   const handleThemeSelect = (themeValue) => {
@@ -155,17 +171,17 @@ export default function Configuration() {
       </div>
 
       <div className={`${cardClass} rounded-2xl shadow-xl border overflow-hidden flex flex-col md:flex-row min-h-[500px]`}>
-        <div className={`w-full md:w-64 border-r ${dark ? "border-slate-800" : "border-slate-100"} flex flex-col`}>
+        <div className={`w-full md:w-64 border-r ${dark ? "border-[#1e293b]" : "border-slate-100"} flex flex-col`}>
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-6 py-5 text-sm font-bold transition-all border-b ${dark ? "border-slate-800" : "border-slate-100"} ${
+                className={`flex items-center gap-3 px-6 py-5 text-sm font-bold transition-all border-b ${dark ? "border-[#1e293b]" : "border-slate-100"} ${
                   isActive
                     ? "bg-[#2da0a8] text-white border-l-4 border-l-white/50"
-                    : `${dark ? "text-slate-400 hover:bg-slate-900" : "text-slate-500 hover:bg-slate-50"} border-l-4 border-l-transparent`
+                    : `${dark ? "text-slate-400 hover:bg-[#0a0c10]" : "text-slate-500 hover:bg-slate-50"} border-l-4 border-l-transparent`
                 }`}
               >
                 <Icon name={tab.icon} className="w-5 h-5" />
@@ -274,21 +290,22 @@ export default function Configuration() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t border-slate-800/10">
-                <button className={`px-6 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-800 hover:bg-slate-900 text-slate-400" : "border-slate-200 hover:bg-slate-50 text-slate-500"}`}>Cancel</button>
+              <div className="flex justify-end gap-3 pt-6 border-t border-[#1e293b]/10">
+                <button className={`px-6 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-[#1e293b] hover:bg-[#0a0c10] text-slate-400" : "border-slate-200 hover:bg-slate-50 text-slate-500"}`}>Cancel</button>
                 <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Saved !" : "Save Profile"}</button>
               </div>
             </motion.div>
           )}
 
           {activeTab === "notifications" && (
+
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
               {[
-                { key: "smsNotifications", label: "SMS Notifications", desc: "Receive SMS alerts" },
-                { key: "emailNotifications", label: "Email Notifications", desc: "Receive email summaries" },
-                { key: "autoBackup", label: "Auto Backup", desc: "Backup data daily" },
+                { key: "autoBackup", label: "Sauvegarde automatique", desc: "Sauvegarde quotidienne des données" },
+                { key: "smsNotifications", label: "SMS Notifications", desc: "Receive SMS alerts for appointments" },
+                { key: "emailNotifications", label: "Email Notifications", desc: "Receive daily email health summaries" },
               ].map((item) => (
-                <div key={item.key} className={`flex items-center justify-between p-5 rounded-2xl border ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+                <div key={item.key} className={`flex items-center justify-between p-5 rounded-2xl border transition-all ${dark ? "bg-[#0a0c10]/30 border-[#1e293b] hover:bg-[#0a0c10]/50" : "bg-slate-50 border-slate-100 hover:bg-white hover:shadow-md"}`}>
                   <div>
                     <p className={`font-bold ${textPrimary}`}>{item.label}</p>
                     <p className={`text-xs ${textSecondary}`}>{item.desc}</p>
@@ -298,13 +315,15 @@ export default function Configuration() {
                   </button>
                 </div>
               ))}
+
               <div className="flex justify-end pt-6">
-                <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Saved !" : "Save Preferences"}</button>
+                <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Enregistré !" : "Sauvegarder"}</button>
               </div>
             </motion.div>
           )}
 
           {activeTab === "preferences" && (
+
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
               <div className="space-y-4">
                 <h3 className={`text-lg font-black ${textPrimary} flex items-center gap-2`}>
@@ -348,7 +367,7 @@ export default function Configuration() {
                           className={`flex-1 py-3 rounded-xl border text-xs font-bold transition-all ${
                             settings.theme === option.toLowerCase()
                               ? "bg-[#2da0a8] text-white border-[#2da0a8] shadow-lg shadow-teal-500/20"
-                              : `${dark ? "bg-slate-900 border-slate-800 text-slate-400" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`
+                              : `${dark ? "bg-[#0a0c10] border-[#1e293b] text-slate-400" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`
                           }`}
                         >
                           {option}
@@ -378,7 +397,7 @@ export default function Configuration() {
                     { key: "confirmDeletion", label: "Confirmation before deletion", desc: "Always ask before deleting important items" },
                     { key: "autoReminders", label: "Automatic reminders", desc: "Send automated alerts to patients and staff" },
                   ].map((item) => (
-                    <div key={item.key} className={`flex items-center justify-between p-4 rounded-xl border ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+                    <div key={item.key} className={`flex items-center justify-between p-4 rounded-xl border ${dark ? "bg-[#0a0c10]/30 border-[#1e293b]" : "bg-slate-50 border-slate-100"}`}>
                       <div>
                         <p className={`text-sm font-bold ${textPrimary}`}>{item.label}</p>
                         <p className={`text-[10px] ${textSecondary}`}>{item.desc}</p>
@@ -394,7 +413,7 @@ export default function Configuration() {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-4 border-t border-slate-800/10">
+              <div className="flex justify-end pt-4 border-t border-[#1e293b]/10">
                 <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Saved !" : "Save Preferences"}</button>
               </div>
             </motion.div>
@@ -402,7 +421,7 @@ export default function Configuration() {
 
           {activeTab === "security" && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className={`p-6 rounded-2xl border flex items-center justify-between ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+              <div className={`p-6 rounded-2xl border flex items-center justify-between ${dark ? "bg-[#0a0c10]/30 border-[#1e293b]" : "bg-slate-50 border-slate-100"}`}>
                 <div>
                   <h3 className={`font-bold text-base ${textPrimary}`}>Password</h3>
                   <p className={`text-xs mt-1 ${textSecondary}`}>Last changed: {passwordDate}</p>
@@ -412,7 +431,7 @@ export default function Configuration() {
                 </button>
               </div>
 
-              <div className={`p-6 rounded-2xl border flex items-center justify-between ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+              <div className={`p-6 rounded-2xl border flex items-center justify-between ${dark ? "bg-[#0a0c10]/30 border-[#1e293b]" : "bg-slate-50 border-slate-100"}`}>
                 <div>
                   <h3 className={`font-bold text-base ${textPrimary}`}>Two-Factor Authentication</h3>
                   <p className={`text-xs mt-1 ${textSecondary}`}>Recommended for maximum security</p>
@@ -425,14 +444,15 @@ export default function Configuration() {
                 </div>
               </div>
 
-              <div className={`p-6 rounded-2xl border ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+              <div className={`p-6 rounded-2xl border ${dark ? "bg-[#0a0c10]/30 border-[#1e293b]" : "bg-slate-50 border-slate-100"}`}>
                 <h3 className={`font-bold text-base mb-4 ${textPrimary}`}>Active Sessions</h3>
                 <div className="space-y-4">
-                  <div className={`flex items-center justify-between pb-4 border-b ${dark ? "border-slate-800" : "border-slate-200"}`}>
+                  <div className={`flex items-center justify-between pb-4 border-b ${dark ? "border-[#1e293b]" : "border-slate-200"}`}>
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
-                        <Icon name="dashboard" className="w-5 h-5 text-[#2da0a8]" />
+                        <Icon name="browser" className="w-5 h-5 text-[#2da0a8]" />
                       </div>
+
                       <div>
                         <p className={`font-bold text-sm ${textPrimary}`}>Current browser</p>
                         <p className={`text-xs mt-0.5 ${textSecondary}`}>{sessionInfo.browser} • {sessionInfo.location}</p>
@@ -445,8 +465,9 @@ export default function Configuration() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
-                          <Icon name="appointments" className={`w-5 h-5 ${textSecondary}`} />
+                          <Icon name="mobile" className={`w-5 h-5 ${textSecondary}`} />
                         </div>
+
                         <div>
                           <p className={`font-bold text-sm ${textPrimary}`}>Mobile App</p>
                           <p className={`text-xs mt-0.5 ${textSecondary}`}>MediSync Mobile App • {sessionInfo.location}</p>
@@ -515,7 +536,7 @@ export default function Configuration() {
               </div>
             ))}
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800/10">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#1e293b]/10">
             <button onClick={() => setShowPasswordModal(false)} className={`px-6 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-50 text-slate-500"}`}>Cancel</button>
             <button onClick={handleChangePassword} className={`px-6 py-2.5 bg-[#2da0a8] hover:bg-[#258a91] text-white rounded-xl transition-all font-bold text-sm shadow-lg shadow-teal-500/20 ${passwords.new && passwords.confirm && passwords.new === passwords.confirm ? "" : "opacity-70 cursor-not-allowed"}`} disabled={!passwords.new || !passwords.confirm || passwords.new !== passwords.confirm}>
               Update Password

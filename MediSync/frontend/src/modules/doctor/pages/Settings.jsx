@@ -25,7 +25,7 @@ export default function Settings({ onProfileUpdate }) {
     language: "en", 
     smsNotifications: false, 
     autoBackup: true,
-    timeZone: "Europe/Paris (UTC+1)",
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     theme: "dark",
     fontSize: "medium",
     animations: true,
@@ -47,7 +47,7 @@ export default function Settings({ onProfileUpdate }) {
 
   const [sessionInfo, setSessionInfo] = useState({
     browser: "Detecting...",
-    location: "Locating..."
+    location: "Detecting..."
   });
   const [mobileSessionRevoked, setMobileSessionRevoked] = useState(false);
   const [passwordDate, setPasswordDate] = useState(apiService.getPasswordLastChanged() ? new Date(apiService.getPasswordLastChanged()).toLocaleDateString() : "Never");
@@ -91,8 +91,9 @@ export default function Settings({ onProfileUpdate }) {
       }));
     });
 
-    // Static location for development to avoid CORS issues
-    setSessionInfo(prev => ({ ...prev, location: "Casablanca, Morocco" }));
+    // Try to get location from timezone
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setSessionInfo(prev => ({ ...prev, location: tz.split('/')[1]?.replace('_', ' ') || tz }));
   }, []);
   
   const handleSave = async () => { 
@@ -484,8 +485,9 @@ export default function Settings({ onProfileUpdate }) {
                   <div className={`flex items-center justify-between pb-4 border-b ${dark ? "border-slate-800" : "border-slate-200"}`}>
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
-                        <Icon name="dashboard" className="w-5 h-5 text-[#2da0a8]" />
+                        <Icon name="browser" className="w-5 h-5 text-[#2da0a8]" />
                       </div>
+
                       <div>
                         <p className={`font-bold text-sm ${textPrimary}`}>Current browser</p>
                         <p className={`text-xs mt-0.5 ${textSecondary}`}>{sessionInfo.browser} • {sessionInfo.location}</p>
@@ -499,8 +501,9 @@ export default function Settings({ onProfileUpdate }) {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
-                          <Icon name="appointments" className={`w-5 h-5 ${textSecondary}`} />
+                          <Icon name="mobile" className={`w-5 h-5 ${textSecondary}`} />
                         </div>
+
                         <div>
                           <p className={`font-bold text-sm ${textPrimary}`}>Mobile App</p>
                           <p className={`text-xs mt-0.5 ${textSecondary}`}>MediSync Mobile App • {sessionInfo.location}</p>

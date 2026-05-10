@@ -66,8 +66,9 @@ export default function HealthHistory({ history, setHistory }) {
 
   const textPrimary = dark ? "text-white" : "text-slate-800";
   const textSecondary = dark ? "text-slate-400" : "text-slate-500";
-  const itemCard = dark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-sm";
-  const timelineColor = dark ? "bg-slate-800" : "bg-slate-100";
+  const itemCard = dark ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-slate-100 shadow-sm";
+  const timelineColor = dark ? "border-[#1e293b]" : "bg-slate-100";
+
 
   return (
     <div className="space-y-6">
@@ -80,14 +81,14 @@ export default function HealthHistory({ history, setHistory }) {
           <button className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${dark ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
             <Icon name="download" className="w-4 h-4 inline mr-2" /> Export
           </button>
-          <button className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-900 text-white hover:bg-black transition-all shadow-lg active:scale-95">
+          <button className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest bg-[#0a0c10] text-white hover:bg-black transition-all shadow-lg active:scale-95">
             <Icon name="print" className="w-4 h-4 inline mr-2" /> Print
           </button>
         </div>
       </div>
 
-      <div className={`${dark ? "bg-slate-900/50 border-slate-800" : "bg-white border-slate-100"} rounded-[2rem] border overflow-hidden shadow-sm`}>
-        <div className={`p-6 border-b ${dark ? "border-slate-800" : "border-slate-100"} space-y-6`}>
+      <div className={`${dark ? "bg-[#0a0c10]/50 border-[#1e293b]" : "bg-white border-slate-100"} rounded-[2rem] border overflow-hidden shadow-sm`}>
+        <div className={`p-6 border-b ${dark ? "border-[#1e293b]" : "border-slate-100"} space-y-6`}>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -98,7 +99,7 @@ export default function HealthHistory({ history, setHistory }) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search actions, records, or dates..." 
-                className={`w-full pl-11 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#2da0a8] focus:border-transparent outline-none text-sm transition-all ${dark ? "bg-slate-800 border-slate-700 text-white placeholder-slate-500" : "bg-white border-slate-200 text-slate-800 shadow-sm"}`} 
+                className={`w-full pl-11 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#2da0a8] focus:border-transparent outline-none text-sm transition-all ${dark ? "bg-[#0a0c10] border-[#1e293b] text-white placeholder-slate-500" : "bg-white border-slate-200 text-slate-800 shadow-sm"}`} 
               />
             </div>
             <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">

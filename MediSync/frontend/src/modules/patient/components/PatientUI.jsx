@@ -31,7 +31,12 @@ export function Icon({ name, className = "w-5 h-5" }) {
     heart: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>,
     shield: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
     users: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+    user: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
+    mobile: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
+    browser: <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.651 9h16.698M3.651 15h16.698m-8.349-9v12m4.175-12a14.124 14.124 0 010 12m-8.35 0a14.124 14.124 0 010-12" /></svg>,
   };
+
+
   return icons[name] || null;
 }
 
@@ -43,8 +48,9 @@ export function Modal({ isOpen, onClose, title, children, size = "md" }) {
   return (
     <AnimatePresence>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 backdrop-blur-sm bg-slate-900/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
-        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className={`${dark ? "bg-slate-900 border-slate-800" : "bg-white border-white"} rounded-[2rem] shadow-2xl ${sizeClasses[size]} w-full max-h-[85vh] overflow-hidden border flex flex-col`}>
-          <div className={`flex items-center justify-between p-6 border-b ${dark ? "border-slate-800" : "border-slate-100"} shrink-0`}>
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} onClick={(e) => e.stopPropagation()} className={`${dark ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-white"} rounded-[2rem] shadow-2xl ${sizeClasses[size]} w-full max-h-[85vh] overflow-hidden border flex flex-col`}>
+          <div className={`flex items-center justify-between p-6 border-b ${dark ? "border-[#1e293b]" : "border-slate-100"} shrink-0`}>
+
             <h2 className={`text-xl font-black tracking-tight ${dark ? "text-white" : "text-slate-800"}`}>{title}</h2>
             <button onClick={onClose} className={`p-2 rounded-xl transition-all ${dark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-100 text-slate-500"}`}><Icon name="close" className="w-5 h-5" /></button>
           </div>
@@ -90,8 +96,9 @@ export function StatCard({ icon, label, value, color, delay = 0 }) {
       initial={{ opacity: 0, y: 10 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ delay }} 
-      className={`${dark ? "bg-[#0a0c10] border-slate-800" : "bg-white border-slate-200"} rounded-2xl p-6 border shadow-sm flex items-center justify-between`}
+      className={`${dark ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-slate-200"} rounded-2xl p-6 border shadow-sm flex items-center justify-between`}
     >
+
       <div>
         <p className={`text-[11px] font-black uppercase tracking-wider ${dark ? "text-slate-500" : "text-slate-400"}`}>{label}</p>
         <h4 className={`text-2xl font-black mt-1 tracking-tight ${dark ? "text-white" : "text-slate-800"}`}>{value}</h4>

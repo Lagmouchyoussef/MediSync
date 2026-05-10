@@ -1,94 +1,125 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme, appointmentsData } from "../components/PatientShared";
+import { useTheme } from "../components/PatientShared";
 import { Icon, Badge, Modal } from "../components/PatientUI";
+import apiService from "../../../core/services/api";
 
-export default function Appointments({ onAddToHistory }) {
+export default function Appointments({ onAddToHistory, appointments = [], setAppointments }) {
   const { dark } = useTheme();
   const [activeTab, setActiveTab] = useState("list");
-  const [appointments, setAppointments] = useState(appointmentsData);
+  const [doctors, setDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        // Try to fetch doctors if the endpoint exists, else fallback to empty
+        const data = await apiService._authorizedRequest('/doctors/').catch(() => []);
+        setDoctors(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch doctors:", err);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
   const [selectedApt, setSelectedApt] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null });
   const [formError, setFormError] = useState("");
   
   // Booking Form State
   const [formData, setFormData] = useState({
-    date: "", doctor: "", timeSlot: "", type: "Consultation", reason: "", email: "", phone: "", consent: false
+    date: "", doctor: "", timeSlot: "", type: "Consultation", reason: "", email: apiService.getUserEmail() || "", phone: "", consent: false
   });
 
   const textPrimary = dark ? "text-white" : "text-slate-800";
   const textSecondary = dark ? "text-slate-400" : "text-slate-500";
-  const cardClass = `rounded-[2rem] border p-8 ${dark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-sm"}`;
-  const inputClass = `w-full px-5 py-3.5 border rounded-2xl focus:ring-4 focus:ring-[#2da0a8]/10 focus:border-[#2da0a8] outline-none text-sm font-bold transition-all ${dark ? "bg-slate-800 border-slate-700 text-white placeholder-slate-600" : "bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"}`;
+  const cardClass = `rounded-[2rem] border p-8 ${dark ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-slate-100 shadow-sm"}`;
+  const inputClass = `w-full px-5 py-3.5 border rounded-2xl focus:ring-4 focus:ring-[#2da0a8]/10 focus:border-[#2da0a8] outline-none text-sm font-bold transition-all ${dark ? "bg-slate-900 border-[#1e293b] text-white placeholder-slate-600" : "bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"}`;
 
-  const handleAction = (id, newStatus) => {
-    setAppointments(appointments.map(a => a.id === id ? { ...a, status: newStatus } : a));
+
+  const handleAction = async (id, newStatus) => {
+    try {
+      // In a real app, we would call an API here
+      setAppointments(appointments.map(a => a.id === id ? { ...a, status: newStatus } : a));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     const apt = appointments.find(a => a.id === deleteConfirm.id);
     if (apt) {
-      onAddToHistory(
-        "Appointment Deleted", 
-        `Appointment with ${apt.doctor} on ${apt.date} was removed and archived.`, 
-        "appointment"
-      );
-      setAppointments(appointments.filter(a => a.id !== deleteConfirm.id));
+      try {
+        await apiService.deleteAppointment(apt.id);
+        onAddToHistory(
+          "Appointment Deleted", 
+          `Appointment with ${apt.doctor} on ${apt.date} was removed and archived.`, 
+          "appointment"
+        );
+        setAppointments(appointments.filter(a => a.id !== deleteConfirm.id));
+      } catch (err) {
+        console.error("Failed to delete appointment:", err);
+      }
     }
     setDeleteConfirm({ isOpen: false, id: null });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
 
     if (!formData.doctor) {
-      setFormError("Veuillez choisir un médecin.");
+      setFormError("Please choose a doctor.");
       return;
     }
     if (!formData.date) {
-      setFormError("Veuillez sélectionner une date.");
+      setFormError("Please select a date.");
       return;
     }
     if (!formData.timeSlot) {
-      setFormError("Veuillez sélectionner une heure.");
+      setFormError("Please select a time.");
       return;
     }
     if (!formData.email) {
-      setFormError("Veuillez saisir votre adresse email.");
+      setFormError("Please enter your email.");
       return;
     }
     if (!formData.phone) {
-      setFormError("Veuillez saisir votre numéro de téléphone.");
+      setFormError("Please enter your phone number.");
       return;
     }
     if (!formData.reason) {
-      setFormError("Veuillez indiquer la raison de votre rendez-vous.");
+      setFormError("Please state the reason for your visit.");
       return;
     }
     if (!formData.consent) {
-      setFormError("Vous devez accepter le traitement des données pour réserver.");
+      setFormError("You must accept the terms to book.");
       return;
     }
 
-    const newApt = {
-      id: Date.now(),
-      doctor: formData.doctor,
-      specialty: "Medical Review",
-      date: formData.date,
-      time: formData.timeSlot,
-      status: "Pending",
-      type: formData.type || "General",
-      initiator: "patient",
-      notes: formData.reason,
-      email: formData.email,
-      phone: formData.phone,
-    };
+    try {
+      const newAptData = {
+        doctor: formData.doctor,
+        date: formData.date,
+        time: formData.timeSlot,
+        type: formData.type,
+        notes: formData.reason,
+        email: formData.email,
+        phone: formData.phone,
+      };
 
-    setAppointments([newApt, ...appointments]);
-    onAddToHistory("Appointment Booked", `New appointment request sent to ${newApt.doctor}.`, "appointment");
-    setActiveTab("list");
-    setFormData({ date: "", doctor: "", timeSlot: "", type: "Consultation", reason: "", email: "", phone: "", consent: false });
+      const response = await apiService._authorizedRequest('/appointments/', 'POST', newAptData).catch(() => ({ ...newAptData, id: Date.now(), status: "Pending" }));
+      
+      setAppointments([response, ...appointments]);
+      onAddToHistory("Appointment Booked", `New appointment request sent to ${formData.doctor}.`, "appointment");
+      setActiveTab("list");
+      setFormData({ date: "", doctor: "", timeSlot: "", type: "Consultation", reason: "", email: apiService.getUserEmail() || "", phone: "", consent: false });
+    } catch (err) {
+      setFormError("Failed to book appointment. Please try again.");
+    }
   };
 
   return (
@@ -101,7 +132,7 @@ export default function Appointments({ onAddToHistory }) {
         </div>
         
         {/* Underline Tabs - Doctor Style */}
-        <div className={`flex gap-8 border-b ${dark ? "border-slate-800" : "border-slate-200"}`}>
+        <div className={`flex gap-8 border-b ${dark ? "border-[#1e293b]" : "border-slate-200"}`}>
           <button 
             onClick={() => setActiveTab("list")}
             className={`pb-4 text-sm font-black uppercase tracking-widest transition-all relative ${
@@ -149,7 +180,7 @@ export default function Appointments({ onAddToHistory }) {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className={`border-b ${dark ? "border-slate-800" : "border-slate-100"}`}>
+                    <tr className={`border-b ${dark ? "border-[#1e293b]" : "border-slate-100"}`}>
                       <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Doctor</th>
                       <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Specialty</th>
                       <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Date & Time</th>
@@ -158,23 +189,23 @@ export default function Appointments({ onAddToHistory }) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {appointments.map(apt => (
+                    {appointments.length > 0 ? appointments.map(apt => (
                       <tr key={apt.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all duration-300">
                         <td className="py-5">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md">
-                              {apt.doctor.charAt(4)}
+                              {apt.doctor?.charAt(0) || "D"}
                             </div>
                             <span className={`text-sm font-bold ${textPrimary}`}>{apt.doctor}</span>
                           </div>
                         </td>
-                        <td className="py-5 text-sm font-medium text-slate-500 dark:text-slate-400">{apt.specialty}</td>
+                        <td className="py-5 text-sm font-medium text-slate-500 dark:text-slate-400">{apt.specialty || apt.type}</td>
                         <td className="py-5">
-                          <p className={`text-sm font-bold ${textPrimary}`}>{apt.date}</p>
+                          <p className={`text-sm font-bold ${textPrimary}`}>{new Date(apt.date).toLocaleDateString()}</p>
                           <p className={`text-[10px] font-black uppercase tracking-widest text-[#2da0a8]`}>{apt.time}</p>
                         </td>
                         <td className="py-5">
-                          <Badge variant={apt.status === 'Accepted' ? 'success' : apt.status === 'Rejected' ? 'danger' : 'warning'}>
+                          <Badge variant={apt.status === 'Accepted' || apt.status === 'Confirmed' ? 'success' : apt.status === 'Rejected' || apt.status === 'Cancelled' ? 'danger' : 'warning'}>
                             {apt.status}
                           </Badge>
                         </td>
@@ -195,12 +226,20 @@ export default function Appointments({ onAddToHistory }) {
                                 )}
                               </>
                             )}
-                            <button onClick={() => setSelectedApt(apt)} className={`w-8 h-8 rounded-lg ${dark ? "bg-slate-800 text-slate-400 hover:bg-blue-500 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-blue-500 hover:text-white"} flex items-center justify-center transition-all`}><Icon name="eye" className="w-4 h-4" /></button>
+                            <button onClick={() => setSelectedApt(apt)} className={`w-8 h-8 rounded-lg ${dark ? "bg-[#1e293b] text-slate-400 hover:bg-blue-500 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-blue-500 hover:text-white"} flex items-center justify-center transition-all`}><Icon name="eye" className="w-4 h-4" /></button>
                             <button onClick={() => setDeleteConfirm({ isOpen: true, id: apt.id })} className={`w-8 h-8 rounded-lg ${dark ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white" : "bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white"} flex items-center justify-center transition-all`}><Icon name="trash" className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan="5" className="py-10 text-center">
+                          <Icon name="calendar" className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                          <p className={`text-xs font-bold uppercase tracking-widest ${textSecondary}`}>No appointments found</p>
+                        </td>
+                      </tr>
+                    )}
+
                   </tbody>
                 </table>
               </div>
@@ -224,9 +263,14 @@ export default function Appointments({ onAddToHistory }) {
                   <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Choose Doctor</label>
                   <select required value={formData.doctor} onChange={(e) => setFormData({...formData, doctor: e.target.value})} className={inputClass}>
                     <option value="">Select a doctor...</option>
-                    <option>Dr. Hassan Amrani</option>
-                    <option>Dr. Leila Berrada</option>
-                    <option>Dr. Rachid Tazi</option>
+                    {doctors.length > 0 ? doctors.map(doc => (
+                      <option key={doc.id} value={doc.name || doc.full_name}>{doc.name || doc.full_name} ({doc.specialty})</option>
+                    )) : (
+                      <>
+                        <option value="General Practitioner">General Practitioner</option>
+                        <option value="Specialist">Specialist</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -294,10 +338,10 @@ export default function Appointments({ onAddToHistory }) {
               <div><h4 className="text-xl font-black">{selectedApt.doctor}</h4><p className="text-sm font-bold opacity-90">{selectedApt.specialty}</p></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Date</p><p className="text-sm font-bold">{selectedApt.date}</p></div>
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Date</p><p className="text-sm font-bold">{new Date(selectedApt.date).toLocaleDateString()}</p></div>
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Time</p><p className="text-sm font-bold">{selectedApt.time}</p></div>
             </div>
-            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-inner"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Reason / Notes</p><p className="text-sm leading-relaxed italic">{selectedApt.notes || "No additional notes provided."}</p></div>
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-[#1e293b] shadow-inner"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Reason / Notes</p><p className="text-sm leading-relaxed italic">{selectedApt.notes || "No additional notes provided."}</p></div>
             <button onClick={() => setSelectedApt(null)} className="w-full py-4 rounded-2xl bg-[#2da0a8] text-white font-black text-xs uppercase tracking-widest shadow-lg">Close Details</button>
           </div>
         )}

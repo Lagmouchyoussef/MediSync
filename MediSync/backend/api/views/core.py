@@ -1,11 +1,13 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from ..models import Patient, Availability, Appointment, Activity
+from rest_framework.decorators import action
+from ..models import Patient, Availability, Appointment, Activity, Notification
 from ..serializers import (
     PatientSerializer, AvailabilitySerializer, 
-    AppointmentSerializer, ActivitySerializer
+    AppointmentSerializer, ActivitySerializer, NotificationSerializer
 )
+
 
 class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -25,3 +27,19 @@ class DashboardStatsView(APIView):
                 many=True
             ).data
         })
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = NotificationSerializer
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['post'])
+    def mark_all_read(self, request):
+        self.get_queryset().update(read=True)
+        return Response({'status': 'all notifications marked as read'})
+
