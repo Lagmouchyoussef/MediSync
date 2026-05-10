@@ -36,8 +36,8 @@ class BrevoEmailService:
             "email": sender_email
         }
         
-        # Official Logo: Using the exact file requested by the user
-        logo_path = r"c:\Users\youss\Desktop\Django Project\MediSync\Logo_Medisync.png"
+        # Official Logo: Using a relative path for Docker compatibility
+        logo_path = os.path.join(settings.BASE_DIR, "static", "images", "Logo_Medisync.png")
         self.logo_url = ""
         
         if os.path.exists(logo_path):
@@ -171,7 +171,7 @@ class BrevoEmailService:
                 <p style="margin: 5px 0;"><strong>Time:</strong> {appointment.time}</p>
             </div>
             <p>Please log in to your dashboard to review and confirm this request.</p>
-            <a href="http://localhost:3000/doctor/appointments" class="button">View Request</a>
+            <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/doctor/appointments" class="button">View Request</a>
         """
         html = self._get_html_wrapper("Appointment Request", content)
         return self.send_transactional_email(to_email, subject, html)
@@ -205,7 +205,7 @@ class BrevoEmailService:
                 <p style="margin: 5px 0;"><strong>Time:</strong> {appointment.time}</p>
             </div>
             <p>Please log in to your portal to accept or decline this invitation.</p>
-            <a href="http://localhost:3000/appointments" class="button">View Invitation</a>
+            <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/appointments" class="button">View Invitation</a>
         """
         html = self._get_html_wrapper("New Invitation", content)
         return self.send_transactional_email(to_email, subject, html)
@@ -226,7 +226,7 @@ class BrevoEmailService:
                 Status: {status.upper()}
             </p>
             <p>Log in to your health portal for more details.</p>
-            <a href="http://localhost:3000/dashboard" class="button">Go to Portal</a>
+            <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/dashboard" class="button">Go to Portal</a>
         """
         html = self._get_html_wrapper("Appointment Update", content)
         return self.send_transactional_email(to_email, subject, html)
@@ -264,7 +264,7 @@ class BrevoEmailService:
             <p>{welcome_msg}</p>
             <p>We are excited to have you on board. MediSync is designed to make healthcare management simple and efficient.</p>
             <p>Click the button below to complete your profile.</p>
-            <a href="http://localhost:3000/configuration" class="button">Get Started</a>
+            <a href="{os.getenv('FRONTEND_URL', 'http://localhost:3000')}/configuration" class="button">Get Started</a>
         """
         html = self._get_html_wrapper("Welcome Onboard", content)
         return self.send_transactional_email(to_email, subject, html)

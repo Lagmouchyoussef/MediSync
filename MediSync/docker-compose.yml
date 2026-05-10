@@ -12,5 +12,23 @@ services:
       - "5432:5432"
     restart: always
 
+  web:
+    build: .
+    container_name: medisync_web
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_NAME=medisync
+      - DB_USER=postgres
+      - DB_PASSWORD=medisync_secure_pwd
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-rc1yg=5di#v8%f&@s=r^fd3ek@ycy0w!%qy-o66k=$$m6_rv4h+
+      - FRONTEND_URL=http://localhost:8080
+    depends_on:
+      - db
+    restart: always
+
 volumes:
   postgres_data:
