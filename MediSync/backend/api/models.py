@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 class Patient(models.Model):
     doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_patients_list')
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_record', null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patient_records', null=True, blank=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
@@ -22,7 +22,9 @@ from django.dispatch import receiver
 
 @receiver(post_delete, sender=Patient)
 def delete_related_user(sender, instance, **kwargs):
-    if instance.user:
+    # Only delete the linked user account if this patient has no other
+    # Patient records (i.e., they are not a patient of any other doctor).
+    if instance.user and not Patient.objects.filter(user=instance.user).exists():
         instance.user.delete()
 
 class Availability(models.Model):
@@ -39,9 +41,10 @@ class Appointment(models.Model):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments', null=True, blank=True)
     date = models.DateField()
     time = models.TimeField()
-    status = models.CharField(max_length=20, choices=(('Pending', 'Pending'), ('Confirmed', 'Confirmed'), ('Cancelled', 'Cancelled')), default='Pending')
+    status = models.CharField(max_length=20, choices=(('Pending', 'Pending'), ('Accepted', 'Accepted'), ('Rejected', 'Rejected'), ('Confirmed', 'Confirmed'), ('Cancelled', 'Cancelled')), default='Pending')
     type = models.CharField(max_length=50, default='Consultation')
-    notes = models.TextField(blank=True, null=True)  # Notes field for appointment details
+    notes = models.TextField(blank=True, null=True)
+    initiator_role = models.CharField(max_length=10, choices=(('doctor', 'doctor'), ('patient', 'patient')), default='patient')
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Activity(models.Model):

@@ -126,8 +126,8 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
       {/* Header & Navigation */}
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Rendez-vous</h1>
-          <p className={`${textSecondary} text-sm font-bold uppercase tracking-widest`}>Gérez vos réservations et demandes de soins</p>
+          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Appointments</h1>
+          <p className={`${textSecondary} text-sm font-bold uppercase tracking-widest`}>Manage your reservations and healthcare requests</p>
         </div>
         
         {/* Underline Tabs - Doctor Style */}
@@ -140,7 +140,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                 : `${dark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`
             }`}
           >
-            Mes Réservations
+            My Reservations
             {activeTab === "list" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2da0a8] rounded-t-full shadow-[0_-2px_8px_rgba(45,160,168,0.5)]"></div>
             )}
@@ -154,7 +154,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                 : `${dark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`
             }`}
           >
-            Prendre rendez-vous
+            Book Appointment
             {activeTab === "book" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2da0a8] rounded-t-full shadow-[0_-2px_8px_rgba(45,160,168,0.5)]"></div>
             )}
@@ -171,8 +171,8 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                   <Icon name="calendar" className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-black ${textPrimary}`}>Toutes les Réservations</h3>
-                  <p className={`${textSecondary} text-xs font-bold`}>Consultez et gérez l'historique de vos consultations</p>
+                  <h3 className={`text-xl font-black ${textPrimary}`}>All Appointments</h3>
+                  <p className={`${textSecondary} text-xs font-bold`}>View and manage your consultation history</p>
                 </div>
               </div>
 
@@ -180,10 +180,10 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className={`border-b ${dark ? "border-[#1e293b]" : "border-slate-100"}`}>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Médecin</th>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Spécialité</th>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Date & Heure</th>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Statut</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Doctor</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Specialty</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Date & Time</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Status</th>
                       <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary} text-right`}>Actions</th>
                     </tr>
                   </thead>
@@ -195,7 +195,16 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                             <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md">
                               {apt.doctor_name?.charAt(0) || "D"}
                             </div>
-                            <span className={`text-sm font-bold ${textPrimary}`}>{apt.doctor_name}</span>
+                            <div>
+                                <span className={`text-sm font-bold ${textPrimary}`}>{apt.doctor_name}</span>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    {apt.initiator_role === 'doctor' ? (
+                                        <span className="text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-500 px-1.5 py-0.5 rounded">Invitation</span>
+                                    ) : (
+                                        <span className="text-[9px] font-black uppercase tracking-widest bg-slate-500/10 text-slate-500 px-1.5 py-0.5 rounded">Request</span>
+                                    )}
+                                </div>
+                            </div>
                           </div>
                         </td>
                         <td className="py-5 text-sm font-medium text-slate-500 dark:text-slate-400">{apt.doctor_specialty || apt.type}</td>
@@ -210,23 +219,39 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                         </td>
                         <td className="py-5 text-right">
                           <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300">
-                            {apt.initiator === "doctor" ? (
+                            {/* Actions for invitations received from doctor */}
+                            {apt.initiator_role === 'doctor' && apt.status === 'Pending' ? (
                               <>
-                                <button onClick={() => handleAction(apt.id, "Accepted")} className={`w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="check" className="w-4 h-4" /></button>
-                                <button onClick={() => handleAction(apt.id, "Rejected")} className={`w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="close" className="w-4 h-4" /></button>
-                                {apt.status !== "Pending" && <button onClick={() => handleAction(apt.id, "Pending")} className={`w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="history" className="w-4 h-4" /></button>}
+                                <button 
+                                  onClick={() => handleAction(apt.id, "Accepted")} 
+                                  className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all"
+                                  title="Accept Invitation"
+                                >
+                                  <Icon name="check" className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => handleAction(apt.id, "Rejected")} 
+                                  className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all"
+                                  title="Decline Invitation"
+                                >
+                                  <Icon name="close" className="w-4 h-4" />
+                                </button>
                               </>
-                            ) : (
-                              <>
-                                {apt.status !== "Cancelled" ? (
-                                  <button onClick={() => handleAction(apt.id, "Cancelled")} className={`w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="close" className="w-4 h-4" /></button>
-                                ) : (
-                                  <button onClick={() => handleAction(apt.id, "Pending")} className={`w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="history" className="w-4 h-4" /></button>
-                                )}
-                              </>
+                            ) : null}
+
+                            {/* Standard actions (Cancel, View, Delete) */}
+                            {apt.status === 'Pending' && apt.initiator_role === 'patient' && (
+                              <button 
+                                onClick={() => handleAction(apt.id, "Cancelled")} 
+                                className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all"
+                                title="Cancel Request"
+                              >
+                                <Icon name="close" className="w-4 h-4" />
+                              </button>
                             )}
-                            <button onClick={() => setSelectedApt(apt)} className={`w-8 h-8 rounded-lg ${dark ? "bg-[#1e293b] text-slate-400 hover:bg-blue-500 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-blue-500 hover:text-white"} flex items-center justify-center transition-all`}><Icon name="eye" className="w-4 h-4" /></button>
-                            <button onClick={() => setDeleteConfirm({ isOpen: true, id: apt.id })} className={`w-8 h-8 rounded-lg ${dark ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white" : "bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white"} flex items-center justify-center transition-all`}><Icon name="trash" className="w-4 h-4" /></button>
+
+                            <button onClick={() => setSelectedApt(apt)} className={`w-8 h-8 rounded-lg ${dark ? "bg-[#1e293b] text-slate-400 hover:bg-blue-500 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-blue-500 hover:text-white"} flex items-center justify-center transition-all`} title="View Details"><Icon name="eye" className="w-4 h-4" /></button>
+                            <button onClick={() => setDeleteConfirm({ isOpen: true, id: apt.id })} className={`w-8 h-8 rounded-lg ${dark ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white" : "bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white"} flex items-center justify-center transition-all`} title="Delete Record"><Icon name="trash" className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -234,7 +259,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                       <tr>
                         <td colSpan="5" className="py-10 text-center">
                           <Icon name="calendar" className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                          <p className={`text-xs font-bold uppercase tracking-widest ${textSecondary}`}>Aucun rendez-vous trouvé</p>
+                          <p className={`text-xs font-bold uppercase tracking-widest ${textSecondary}`}>No appointments found</p>
                         </td>
                       </tr>
                     )}

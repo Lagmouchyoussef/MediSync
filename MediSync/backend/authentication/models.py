@@ -22,3 +22,13 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.role}"
+
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+import os
+
+@receiver(post_delete, sender=Profile)
+def delete_profile_image(sender, instance, **kwargs):
+    if instance.image:
+        if os.path.isfile(instance.image.path):
+            os.remove(instance.image.path)

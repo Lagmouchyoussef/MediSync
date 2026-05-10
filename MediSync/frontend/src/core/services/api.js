@@ -255,18 +255,6 @@ class ApiService {
     return this._authorizedRequest(`${prefix}/appointments/`, 'POST', data);
   }
 
-  async deleteAppointment(id) {
-    const role = this.getUserRole();
-    const prefix = role === 'doctor' ? '/doctor' : '/patient';
-    return this._authorizedRequest(`${prefix}/appointments/${id}/`, 'DELETE');
-  }
-
-  async updateAppointmentStatus(id, status) {
-    const role = this.getUserRole();
-    const prefix = role === 'doctor' ? '/doctor' : '/patient';
-    return this._authorizedRequest(`${prefix}/appointments/${id}/`, 'PATCH', { status });
-  }
-
   async fetchAvailabilities() {
     return this._authorizedRequest('/doctor/availabilities/');
   }
@@ -302,6 +290,7 @@ class ApiService {
   }
 
   async deleteActivity(id) {
+    if (!id) throw new Error('Activity ID is required for deletion');
     const role = this.getUserRole();
     const prefix = role === 'doctor' ? '/doctor' : '/patient';
     return this._authorizedRequest(`${prefix}/activities/${id}/`, 'DELETE');

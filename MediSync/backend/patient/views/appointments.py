@@ -11,7 +11,12 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
         return Appointment.objects.filter(patient_user=self.request.user).order_by('-date', '-time')
 
     def perform_create(self, serializer):
-        appointment = serializer.save(patient_user=self.request.user, status='Pending')
+        appointment = serializer.save(
+            patient_user=self.request.user, 
+            status='Pending', 
+            initiator_role='patient',
+            patient_name=self.request.user.get_full_name()
+        )
         
         # Ensure a Patient record exists for this doctor
         from api.models import Patient
@@ -29,15 +34,15 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
         # Notify Doctor
         Notification.objects.create(
             user=appointment.doctor,
-            title="Nouvelle Demande de Rendez-vous",
-            message=f"{self.request.user.get_full_name()} a demandé une consultation pour le {appointment.date}.",
+            title="New Appointment Request",
+            message=f"{self.request.user.get_full_name()} has requested a consultation on {appointment.date}.",
             type="appointment"
         )
         
         Activity.objects.create(
             user=self.request.user,
-            action="Demande de consultation",
-            details=f"Demande envoyée au Dr. {appointment.doctor.get_full_name()}",
+            action="Consultation Request",
+            details=f"Request sent to Dr. {appointment.doctor.get_full_name()}",
             type="info"
         )
 
@@ -52,17 +57,42 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
             if field not in allowed_fields:
                 return Response({"error": f"Patients can only update {', '.join(allowed_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
         
-        if 'status' in request.data and request.data['status'] not in ['Cancelled']:
-             return Response({"error": "Patients can only cancel appointments"}, status=status.HTTP_400_BAD_REQUEST)
+        # Allow patient to Accept/Reject/Cancel
+        if 'status' in request.data:
+            new_status = request.data['status']
+            if new_status not in ['Accepted', 'Rejected', 'Cancelled', 'Pending']:
+                 return Response({"error": "Invalid status transition for patient"}, status=status.HTTP_400_BAD_REQUEST)
              
         res = super().update(request, *args, **kwargs)
         
-        if 'status' in request.data and request.data['status'] == 'Cancelled':
-            Notification.objects.create(
-                user=appointment.doctor,
-                title="Rendez-vous Annulé",
-                message=f"{request.user.get_full_name()} a annulé le rendez-vous du {appointment.date}.",
-                type="warning"
-            )
+        if 'status' in request.data:
+            new_status = request.data['status']
+            title = ""
+            msg = ""
+            
+            if new_status == 'Cancelled':
+                title = "Appointment Cancelled"
+                msg = f"{request.user.get_full_name()} cancelled the appointment on {appointment.date}."
+            elif new_status == 'Accepted':
+                title = "Invitation Accepted"
+                msg = f"{request.user.get_full_name()} has accepted your invitation for {appointment.date}."
+            elif new_status == 'Rejected':
+                title = "Invitation Declined"
+                msg = f"{request.user.get_full_name()} has declined your invitation for {appointment.date}."
+                
+            if title:
+                Notification.objects.create(
+                    user=appointment.doctor,
+                    title=title,
+                    message=msg,
+                    type="appointment"
+                )
+                
+                Activity.objects.create(
+                    user=appointment.doctor,
+                    action=title,
+                    details=msg,
+                    type="info" if new_status == 'Accepted' else "warning"
+                )
             
         return res

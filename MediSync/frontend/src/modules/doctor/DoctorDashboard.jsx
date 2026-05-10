@@ -84,6 +84,55 @@ export default function DoctorDashboard() {
   const [history, setHistory] = useState([]);
 
   const [profile, setProfile] = useState(null);
+  const [userImage, setUserImage] = useState(apiService.getUserImage());
+  const refreshUserImage = () => setUserImage(apiService.getUserImage());
+
+  // Global data fetch function to be reused
+  const fetchData = async () => {
+    try {
+      // Fetch Profile
+      const profileData = await apiService.fetchProfile();
+      setProfile(profileData);
+      if (profileData.image) setUserImage(profileData.image);
+      
+      // Fetch Patients
+      const patientsData = await apiService.fetchPatients();
+      if (Array.isArray(patientsData)) {
+        const formattedPatients = patientsData.map(p => ({
+          ...p,
+          name: `${p.first_name} ${p.last_name}`,
+          age: p.date_of_birth ? (new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()) : "N/A"
+        }));
+        setPatients(formattedPatients);
+      }
+
+      // Fetch Dashboard statistics from backend summary
+      const statsData = await apiService.fetchStats();
+      if (statsData?.summary) {
+        setDashboardStats(statsData);
+      }
+
+      // Fetch Appointments
+      const appointmentsData = await apiService.fetchAppointments();
+      if (Array.isArray(appointmentsData)) {
+        setInvitations(appointmentsData);
+      }
+
+      // Fetch History
+      const activitiesData = await apiService.fetchActivities();
+      if (Array.isArray(activitiesData)) {
+        setHistory(activitiesData);
+      }
+
+      // Fetch Notifications
+      const notifsData = await apiService.fetchNotifications().catch(() => []);
+      if (Array.isArray(notifsData)) {
+        setNotifications(notifsData);
+      }
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -92,80 +141,39 @@ export default function DoctorDashboard() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     
-    // Global data fetch
-    const fetchData = async () => {
-      try {
-        // Fetch Profile
-        const profileData = await apiService.fetchProfile();
-        setProfile(profileData);
-        if (profileData.image) setUserImage(profileData.image);
-        
-        // Fetch Patients
-        const patientsData = await apiService.fetchPatients();
-        if (Array.isArray(patientsData)) {
-          const formattedPatients = patientsData.map(p => ({
-            ...p,
-            name: `${p.first_name} ${p.last_name}`,
-            age: p.date_of_birth ? (new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()) : "N/A"
-          }));
-          setPatients(formattedPatients);
-        }
-
-        // Fetch Dashboard statistics from backend summary
-        const statsData = await apiService.fetchStats();
-        if (statsData?.summary) {
-          setDashboardStats(statsData);
-        }
-
-        // Fetch Appointments
-        const appointmentsData = await apiService.fetchAppointments();
-        if (Array.isArray(appointmentsData)) {
-          setInvitations(appointmentsData);
-        }
-
-        // Fetch History
-        const activitiesData = await apiService.fetchActivities();
-        if (Array.isArray(activitiesData)) {
-          setHistory(activitiesData);
-        }
-
-        // Fetch Notifications
-        const notifsData = await apiService.fetchNotifications().catch(() => []);
-        if (Array.isArray(notifsData)) {
-          setNotifications(notifsData);
-        }
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-      }
-    };
     fetchData();
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Profile image sync
-  const [userImage, setUserImage] = useState(apiService.getUserImage());
-  const refreshUserImage = () => setUserImage(apiService.getUserImage());
+  // Refresh data when switching to dashboard or patients to ensure "quasi real-time"
+  useEffect(() => {
+    if (activePage === 'dashboard' || activePage === 'patients' || activePage === 'history') {
+      fetchData();
+    }
+  }, [activePage]);
+
+
 
   const navSections = [
     {
-      title: "Vue d'ensemble",
+      title: "Overview",
       items: [
-        { id: "dashboard", label: "Analytiques", icon: "dashboard", badge: null },
+        { id: "dashboard", label: "Analytics", icon: "dashboard", badge: null },
       ]
     },
     {
-      title: "Clinique",
+      title: "Clinical",
       items: [
         { id: "patients", label: "Patients", icon: "patients", badge: Array.isArray(patients) ? patients.length : 0 },
         { 
           id: "appointments", 
-          label: "Disponibilité", 
+          label: "Availability", 
           icon: "appointments", 
           badge: Array.isArray(invitations) ? invitations.length : 0,
           subItems: [
-            { id: "manage", label: "Gestion Planning" },
-            { id: "history", label: "Historique Invitations", badge: Array.isArray(invitations) ? invitations.length : 0 }
+            { id: "manage", label: "Manage Setup" },
+            { id: "history", label: "Invitation History", badge: Array.isArray(invitations) ? invitations.length : 0 }
           ]
         },
       ]
@@ -173,7 +181,7 @@ export default function DoctorDashboard() {
     {
       title: "Administration",
       items: [
-        { id: "history", label: "Activité", icon: "history", badge: Array.isArray(history) ? history.length : 0 },
+        { id: "history", label: "Activity", icon: "history", badge: Array.isArray(history) ? history.length : 0 },
         { id: "settings", label: "Configuration", icon: "settings", badge: null },
       ]
     }

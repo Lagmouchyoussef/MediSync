@@ -155,10 +155,15 @@ export default function Settings({ onProfileUpdate }) {
       apiService.logout();
       window.location.href = "/";
     } catch (err) {
-      console.error(err);
-      alert(err.message || "Erreur lors de la suppression du compte");
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
+      if (err.message?.includes("401") || err.message?.includes("403")) {
+        apiService.logout();
+        window.location.href = "/";
+      } else {
+        console.error(err);
+        alert(err.message || "Erreur lors de la suppression du compte");
+        setIsDeleting(false);
+        setShowDeleteConfirm(false);
+      }
     }
   };
 

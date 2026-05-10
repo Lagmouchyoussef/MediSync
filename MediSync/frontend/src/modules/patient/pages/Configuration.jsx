@@ -162,7 +162,12 @@ export default function Configuration() {
       apiService.logout();
       window.location.href = "/";
     } catch (err) {
-      alert("Error deleting account: " + err.message);
+      if (err.message.includes("401") || err.message.includes("403")) {
+        apiService.logout();
+        window.location.href = "/";
+      } else {
+        alert("Error deleting account: " + err.message);
+      }
     }
   };
 
@@ -333,7 +338,7 @@ export default function Configuration() {
 
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
               {[
-                { key: "autoBackup", label: "Sauvegarde automatique", desc: "Sauvegarde quotidienne des données" },
+                { key: "autoBackup", label: "Automatic Backup", desc: "Daily data backup" },
                 { key: "smsNotifications", label: "SMS Notifications", desc: "Receive SMS alerts for appointments" },
                 { key: "emailNotifications", label: "Email Notifications", desc: "Receive daily email health summaries" },
               ].map((item) => (
@@ -349,7 +354,7 @@ export default function Configuration() {
               ))}
 
               <div className="flex justify-end pt-6">
-                <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Enregistré !" : "Sauvegarder"}</button>
+                <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Saved!" : "Save Changes"}</button>
               </div>
             </motion.div>
           )}

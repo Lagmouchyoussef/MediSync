@@ -399,7 +399,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
                 {invitations.map(inv => (
                   <tr key={inv.id} className="group">
                     <td className="py-4 pr-4">
-                      {inv.direction === "sent" ? (
+                      {inv.initiator_role === "doctor" ? (
                         <div className="flex items-center gap-2 text-blue-500 bg-blue-500/10 w-max px-3 py-1.5 rounded-lg">
                           <Icon name="send" className="w-3.5 h-3.5" />
                           <span className="text-[10px] font-black uppercase tracking-widest">Sent</span>
@@ -425,28 +425,35 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
                       <Badge variant="purple">{inv.type}</Badge>
                     </td>
                     <td className="py-4 pr-4">
-                      <Badge variant={inv.status === 'Accepted' ? 'success' : inv.status === 'Declined' ? 'danger' : 'warning'}>
+                      <Badge variant={
+                        inv.status === 'Confirmed' || inv.status === 'Accepted' ? 'success' : 
+                        inv.status === 'Cancelled' || inv.status === 'Rejected' || inv.status === 'Declined' ? 'danger' : 
+                        'warning'
+                      }>
                         {inv.status}
                       </Badge>
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {inv.direction === "received" && (
+                        {inv.initiator_role === "patient" && (
                           <div className="flex items-center gap-1.5 mr-2">
-                            {inv.status !== 'Accepted' && (
-                              <button onClick={() => updateStatus(inv.id, 'Accepted')} title="Accept" className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-colors">
-                                <Icon name="check" className="w-4 h-4" />
-                              </button>
-                            )}
-                            {inv.status !== 'Declined' && (
-                              <button onClick={() => updateStatus(inv.id, 'Declined')} title="Decline" className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors">
-                                <Icon name="close" className="w-4 h-4" />
-                              </button>
-                            )}
-                            {inv.status !== 'Pending' && (
-                              <button onClick={() => updateStatus(inv.id, 'Pending')} title="Set Pending" className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white flex items-center justify-center transition-colors">
-                                <Icon name="activity" className="w-4 h-4" />
-                              </button>
+                            {inv.status === 'Pending' && (
+                              <>
+                                <button 
+                                  onClick={() => updateStatus(inv.id, 'Confirmed')} 
+                                  title="Confirm Appointment" 
+                                  className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-colors"
+                                >
+                                  <Icon name="check" className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => updateStatus(inv.id, 'Cancelled')} 
+                                  title="Decline Appointment" 
+                                  className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors"
+                                >
+                                  <Icon name="close" className="w-4 h-4" />
+                                </button>
+                              </>
                             )}
                           </div>
                         )}

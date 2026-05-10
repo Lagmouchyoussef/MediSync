@@ -17,13 +17,37 @@ export default function Patients({ patients, setPatients }) {
   });
   const [selectedIds, setSelectedIds] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null, type: "single" });
+  // No local fetch — patients are fetched once in DoctorDashboard and passed as a prop.
+  // This prevents race conditions and double network requests.
+  const loading = false;
 
-  const filteredPatients = useMemo(() => patients.filter((p) => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.phone.includes(searchTerm) || 
-    p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    `PAT-${String(p.id).padStart(4, "0")}-${new Date(p.date).getFullYear()}`.includes(searchTerm)
-  ), [patients, searchTerm]);
+  // Normalize a patient record to always have a `name` field and safe defaults
+  const normalizePatient = (p) => ({
+    ...p,
+    first_name: p.first_name || "",
+    last_name: p.last_name || "",
+    name: p.name || `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Unnamed Patient",
+    phone: p.phone || "",
+    email: p.email || "",
+    address: p.address || "",
+    gender: p.gender || "Other",
+    status: p.status || "Active",
+    age: p.date_of_birth ? (new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()) : "N/A"
+  });
+
+
+  const filteredPatients = useMemo(() => patients
+    .map(p => normalizePatient(p))
+    .filter((p) => {
+      const q = searchTerm.toLowerCase();
+      return (
+        p.name.toLowerCase().includes(q) || 
+        p.phone.includes(searchTerm) || 
+        p.email.toLowerCase().includes(q) ||
+        `PAT-${String(p.id).padStart(4, "0")}-${new Date(p.date || p.created_at || Date.now()).getFullYear()}`.includes(searchTerm)
+      );
+    })
+  , [patients, searchTerm]);
 
   const paginatedPatients = filteredPatients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
@@ -164,7 +188,16 @@ export default function Patients({ patients, setPatients }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {paginatedPatients.map((patient) => {
+              {loading ? (
+                <tr>
+                  <td colSpan="7" className="p-10 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-10 h-10 border-4 border-[#2da0a8] border-t-transparent rounded-full animate-spin"></div>
+                      <p className={`text-xs font-black uppercase tracking-widest ${textSecondary}`}>Loading patients...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginatedPatients.length > 0 ? paginatedPatients.map((patient) => {
                 const isSelected = selectedIds.includes(patient.id);
                 return (
                   <tr key={patient.id} className={`${isSelected ? (dark ? "bg-[#2da0a8]/10" : "bg-[#2da0a8]/5") : ""} ${hoverRow} transition-colors`}>
@@ -179,11 +212,11 @@ export default function Patients({ patients, setPatients }) {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-[#2da0a8] rounded-xl flex items-center justify-center text-white font-bold shadow-sm">
-                          {patient.name.charAt(0)}
+                          {(patient.name || "P").charAt(0)}
                         </div>
                         <div>
                           <p className={`text-xs font-black text-[#2da0a8] mb-0.5 tracking-tight`}>{getPatientId(patient)}</p>
-                          <p className={`font-bold text-sm ${textPrimary}`}>{patient.name}</p>
+                          <p className={`font-bold text-sm ${textPrimary}`}>{patient.name || "Unnamed Patient"}</p>
                         </div>
                       </div>
                     </td>
@@ -212,7 +245,16 @@ export default function Patients({ patients, setPatients }) {
                     </td>
                   </tr>
                 );
-              })}
+              }) : (
+                <tr>
+                  <td colSpan="7" className="p-10 text-center">
+                    <div className="flex flex-col items-center gap-3 opacity-20">
+                      <Icon name="patients" className="w-12 h-12" />
+                      <p className={`text-xs font-black uppercase tracking-widest ${textSecondary}`}>No patients found</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

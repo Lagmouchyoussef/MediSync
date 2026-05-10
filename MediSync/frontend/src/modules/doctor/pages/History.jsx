@@ -32,6 +32,7 @@ export default function History({ setPatients, history: externalHistory, setHist
   const mappedHistory = useMemo(() => {
     if (!Array.isArray(history)) return [];
     return history.map(h => ({
+      rawId: h.id, // Store the original ID clearly
       id: h.id,
       type: h.action,
       patient: h.details?.split(' ')[0] || "System",
@@ -65,10 +66,16 @@ export default function History({ setPatients, history: externalHistory, setHist
     if (!deleteConfirm.id) return;
     try {
       await apiService.deleteActivity(deleteConfirm.id);
-      setHistory(prev => prev.filter(h => h.id !== deleteConfirm.id));
+      // Update both local and parent state
+      if (setExternalHistory) {
+        setExternalHistory(prev => prev.filter(h => h.id !== deleteConfirm.id));
+      } else {
+        setLocalHistory(prev => prev.filter(h => h.id !== deleteConfirm.id));
+      }
       setDeleteConfirm({ isOpen: false, id: null });
     } catch (err) {
-      alert("Error deleting history event");
+      console.error("Delete error:", err);
+      alert(err.message || "Error deleting history event");
     }
   };
 
