@@ -44,6 +44,8 @@ export default function Settings() {
     browser: "Detecting...",
     location: "Locating..."
   });
+  const [mobileSessionRevoked, setMobileSessionRevoked] = useState(false);
+  const [passwordDate, setPasswordDate] = useState(apiService.getPasswordLastChanged() ? new Date(apiService.getPasswordLastChanged()).toLocaleDateString() : "Never");
 
   useEffect(() => {
     // Detect Browser & OS
@@ -64,6 +66,13 @@ export default function Settings() {
     };
 
     setSessionInfo(prev => ({ ...prev, browser: getBrowserInfo() }));
+
+    // Fetch user info for password date
+    apiService.fetchCurrentUser().then(user => {
+      if (user.password_last_changed) {
+        setPasswordDate(new Date(user.password_last_changed).toLocaleDateString());
+      }
+    });
 
     // Detect Location via IP
     fetch("https://ipapi.co/json/")
@@ -136,6 +145,7 @@ export default function Settings() {
         setIsChangingPassword(false);
         setShowPasswordModal(false);
         setPasswords({ current: '', new: '', confirm: '' });
+        setPasswordDate(new Date().toLocaleDateString());
         alert("Mot de passe mis à jour avec succès !");
       } else {
         setIsChangingPassword(false);
@@ -380,7 +390,7 @@ export default function Settings() {
               <div className={`p-6 rounded-2xl border flex items-center justify-between ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
                 <div>
                   <h3 className={`font-bold text-base ${textPrimary}`}>Password</h3>
-                  <p className={`text-xs mt-1 ${textSecondary}`}>Last changed: 3 months ago</p>
+                  <p className={`text-xs mt-1 ${textSecondary}`}>Last changed: {passwordDate}</p>
                 </div>
                 <button onClick={() => setShowPasswordModal(true)} className={`px-5 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-100 text-slate-700"}`}>
                   Change Password
@@ -421,20 +431,22 @@ export default function Settings() {
                   </div>
 
                   {/* Mobile App */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
-                        <Icon name="appointments" className={`w-5 h-5 ${textSecondary}`} />
+                  {!mobileSessionRevoked && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-xl ${dark ? "bg-slate-800" : "bg-white border border-slate-100"}`}>
+                          <Icon name="appointments" className={`w-5 h-5 ${textSecondary}`} />
+                        </div>
+                        <div>
+                          <p className={`font-bold text-sm ${textPrimary}`}>Mobile App</p>
+                          <p className={`text-xs mt-0.5 ${textSecondary}`}>MediSync Mobile App • {sessionInfo.location}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className={`font-bold text-sm ${textPrimary}`}>Mobile App</p>
-                        <p className={`text-xs mt-0.5 ${textSecondary}`}>iOS • Paris, France</p>
-                      </div>
+                      <button onClick={() => setMobileSessionRevoked(true)} className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${dark ? "text-slate-400 hover:text-rose-400 hover:bg-rose-500/10" : "text-slate-500 hover:text-rose-600 hover:bg-rose-50"}`}>
+                        Revoke
+                      </button>
                     </div>
-                    <button className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors ${dark ? "text-slate-400 hover:text-rose-400 hover:bg-rose-500/10" : "text-slate-500 hover:text-rose-600 hover:bg-rose-50"}`}>
-                      Revoke
-                    </button>
-                  </div>
+                  )}
 
                 </div>
               </div>

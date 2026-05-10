@@ -29,6 +29,9 @@ class ApiService {
         localStorage.setItem('userEmail', data.user.email);
         localStorage.setItem('userFirstName', data.user.first_name || '');
         localStorage.setItem('userLastName', data.user.last_name || '');
+        if (data.user.password_last_changed) {
+          localStorage.setItem('passwordLastChanged', data.user.password_last_changed);
+        }
       }
 
       return data;
@@ -110,6 +113,9 @@ class ApiService {
         localStorage.setItem('userEmail', data.user.email);
         localStorage.setItem('userFirstName', data.user.first_name || '');
         localStorage.setItem('userLastName', data.user.last_name || '');
+        if (data.user.password_last_changed) {
+          localStorage.setItem('passwordLastChanged', data.user.password_last_changed);
+        }
       }
 
       return data.user;
@@ -125,6 +131,7 @@ class ApiService {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userFirstName');
     localStorage.removeItem('userLastName');
+    localStorage.removeItem('passwordLastChanged');
   }
 
   getAuthToken() {
@@ -145,6 +152,10 @@ class ApiService {
 
   getUserLastName() {
     return localStorage.getItem('userLastName') || '';
+  }
+
+  getPasswordLastChanged() {
+    return localStorage.getItem('passwordLastChanged');
   }
 
   getUserFullName() {

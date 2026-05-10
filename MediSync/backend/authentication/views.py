@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.utils import timezone
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
@@ -86,14 +87,17 @@ class CurrentUserView(APIView):
     def get(self, request):
         user = request.user
         role = 'patient'
+        password_last_changed = None
         if hasattr(user, 'profile'):
             role = user.profile.role
+            password_last_changed = user.profile.password_last_changed
         return Response({
             'user': {
                 'email': user.email,
                 'role': role,
                 'first_name': user.first_name,
-                'last_name': user.last_name
+                'last_name': user.last_name,
+                'password_last_changed': password_last_changed
             }
         })
 
@@ -118,5 +122,10 @@ class ChangePasswordView(APIView):
 
         user.set_password(new_password)
         user.save()
+        
+        if hasattr(user, 'profile'):
+            user.profile.password_last_changed = timezone.now()
+            user.profile.save()
+            
         return Response({'message': 'Mot de passe mis à jour avec succès'})
 
