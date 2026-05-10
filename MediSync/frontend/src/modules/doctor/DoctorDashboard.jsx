@@ -68,6 +68,15 @@ export default function DoctorDashboard() {
 
   // Global state for patients to persist changes
   const [patients, setPatients] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState({
+    summary: {
+      total_patients: 0,
+      total_appointments: 0,
+      total_history: 0,
+      upcoming_today: 0,
+    },
+    charts: {},
+  });
   
   // Navigation states
   const [expandedNav, setExpandedNav] = useState(null);
@@ -105,6 +114,12 @@ export default function DoctorDashboard() {
             age: p.date_of_birth ? (new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()) : "N/A"
           }));
           setPatients(formattedPatients);
+        }
+
+        // Fetch Dashboard statistics from backend summary
+        const statsData = await apiService.fetchStats();
+        if (statsData?.summary) {
+          setDashboardStats(statsData);
         }
 
         // Fetch Appointments
@@ -180,9 +195,9 @@ export default function DoctorDashboard() {
   };
 
   const renderPage = () => {
-    const pCount = Array.isArray(patients) ? patients.length : 0;
-    const iCount = Array.isArray(invitations) ? invitations.length : 0;
-    const hCount = Array.isArray(history) ? history.length : 0;
+    const pCount = dashboardStats?.summary?.total_patients ?? (Array.isArray(patients) ? patients.length : 0);
+    const iCount = dashboardStats?.summary?.total_appointments ?? (Array.isArray(invitations) ? invitations.length : 0);
+    const hCount = dashboardStats?.summary?.total_history ?? (Array.isArray(history) ? history.length : 0);
     const nUnread = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
     const safeInvs = Array.isArray(invitations) ? invitations : [];
 
