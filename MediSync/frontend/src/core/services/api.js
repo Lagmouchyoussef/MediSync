@@ -215,6 +215,10 @@ class ApiService {
     return this._authorizedRequest('/activities/', 'POST', { action, details, type });
   }
 
+  async deleteActivity(id) {
+    return this._authorizedRequest(`/activities/${id}/`, 'DELETE');
+  }
+
   // --- Helper for authorized requests ---
   async _authorizedRequest(endpoint, method = 'GET', body = null) {
     const token = this.getAuthToken();

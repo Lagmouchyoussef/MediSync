@@ -16,6 +16,7 @@ export default function Patients({ patients, setPatients }) {
     address: "", date_of_birth: "", username: "", password: "" 
   });
   const [selectedIds, setSelectedIds] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null, type: "single" });
 
   const filteredPatients = useMemo(() => patients.filter((p) => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -62,13 +63,15 @@ export default function Patients({ patients, setPatients }) {
     setShowModal(true); 
   };
 
-  const handleDelete = async (id) => { 
-    if (!confirm("Are you sure you want to delete this patient?")) return;
+  const handleDelete = async () => { 
+    const { id } = deleteConfirm;
+    if (!id) return;
     try {
       await apiService.deletePatient(id);
       setPatients(prev => prev.filter((p) => String(p.id) !== String(id)));
       setSelectedIds(prev => prev.filter(sId => String(sId) !== String(id)));
       await apiService.createActivity("Deleted Patient", `Patient ID ${id} was deleted.`, "danger");
+      setDeleteConfirm({ isOpen: false, id: null, type: "single" });
     } catch (err) {
       alert("Failed to delete patient");
     }
@@ -76,7 +79,6 @@ export default function Patients({ patients, setPatients }) {
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`Are you sure you want to permanently delete ${selectedIds.length} patients?`)) return;
     
     try {
       for (const id of selectedIds) {
@@ -85,6 +87,7 @@ export default function Patients({ patients, setPatients }) {
       setPatients(prev => prev.filter(p => !selectedIds.map(String).includes(String(p.id))));
       setSelectedIds([]);
       await apiService.createActivity("Bulk Deletion", `${selectedIds.length} patients were permanently deleted.`, "danger");
+      setDeleteConfirm({ isOpen: false, id: null, type: "single" });
     } catch (err) {
       alert("Failed to delete some patients");
     }
@@ -120,7 +123,7 @@ export default function Patients({ patients, setPatients }) {
         <div className="flex items-center gap-3">
           {selectedIds.length > 0 && (
             <button 
-              onClick={handleBulkDelete}
+              onClick={() => setDeleteConfirm({ isOpen: true, id: null, type: "bulk" })}
               className="flex items-center gap-2 bg-rose-500 text-white px-5 py-2.5 rounded-xl hover:bg-rose-600 transition-all font-bold text-sm shadow-lg shadow-rose-500/20 active:scale-95"
             >
               <Icon name="trash" className="w-4 h-4" />
@@ -205,7 +208,7 @@ export default function Patients({ patients, setPatients }) {
                         <button onClick={() => handleEdit(patient)} className={`p-2 rounded-lg transition-colors ${dark ? "hover:bg-slate-800 text-slate-400 hover:text-[#2da0a8]" : "hover:bg-slate-100 text-slate-500 hover:text-[#2da0a8]"}`}>
                           <Icon name="edit" className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(patient.id)} className={`p-2 rounded-lg transition-colors ${dark ? "hover:bg-slate-800 text-slate-400 hover:text-rose-500" : "hover:bg-slate-100 text-slate-500 hover:text-rose-500"}`}>
+                        <button onClick={() => setDeleteConfirm({ isOpen: true, id: patient.id, type: "single" })} className={`p-2 rounded-xl border transition-all ${dark ? "border-slate-800 hover:bg-rose-900/30 text-rose-400" : "border-slate-100 hover:bg-rose-50 text-rose-500"}`}>
                           <Icon name="trash" className="w-4 h-4" />
                         </button>
                       </div>
@@ -314,6 +317,36 @@ export default function Patients({ patients, setPatients }) {
             </button>
           </div>
         </form>
+      </Modal>
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={deleteConfirm.isOpen} onClose={() => setDeleteConfirm({ isOpen: false, id: null, type: "single" })} title="Confirm Deletion" size="sm">
+        <div className="text-center py-4 space-y-6">
+          <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="trash" className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h3 className={`text-lg font-black ${dark ? "text-white" : "text-slate-800"}`}>
+              {deleteConfirm.type === "bulk" ? `Delete ${selectedIds.length} Patients?` : "Delete Patient?"}
+            </h3>
+            <p className={`text-sm font-medium ${dark ? "text-slate-400" : "text-slate-500"} px-4 leading-relaxed`}>
+              {deleteConfirm.type === "bulk" 
+                ? `Are you sure you want to permanently delete these ${selectedIds.length} patients from the system?` 
+                : "Permanently delete this patient from history?"}
+            </p>
+          </div>
+          <div className="flex gap-3 pt-4 px-2">
+            <button 
+              onClick={() => setDeleteConfirm({ isOpen: false, id: null, type: "single" })}
+              className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${dark ? "bg-slate-800 hover:bg-slate-700 text-slate-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"}`}
+            >
+              Cancel
+            </button>
+            <button onClick={deleteConfirm.type === "bulk" ? handleBulkDelete : handleDelete} className="flex-1 bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 active:scale-95 flex items-center justify-center gap-2">
+              <Icon name="trash" className="w-4 h-4" />
+              {deleteConfirm.type === "bulk" ? `Delete Selected (${selectedIds.length})` : "Delete"}
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

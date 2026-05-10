@@ -12,6 +12,7 @@ export default function History({ setPatients, history: externalHistory, setHist
   const [filterCategory, setFilterCategory] = useState("all");
   const [selectedItem, setSelectedItem] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null });
   const dropdownRef = useRef(null);
 
   // Sync with external history if provided
@@ -60,11 +61,12 @@ export default function History({ setPatients, history: externalHistory, setHist
     return filterCategory === "all" || item.category === filterCategory ? matchSearch : false; 
   }), [mappedHistory, searchTerm, filterCategory]);
 
-  const handleDeleteHistory = async (id) => {
-    if (!confirm("Permanently delete this event from history?")) return;
+  const handleDeleteHistory = async () => {
+    if (!deleteConfirm.id) return;
     try {
-      // In a real app: await apiService.deleteActivity(id);
-      setHistory(prev => prev.filter(h => h.id !== id));
+      await apiService.deleteActivity(deleteConfirm.id);
+      setHistory(prev => prev.filter(h => h.id !== deleteConfirm.id));
+      setDeleteConfirm({ isOpen: false, id: null });
     } catch (err) {
       alert("Error deleting history event");
     }
@@ -152,7 +154,7 @@ export default function History({ setPatients, history: externalHistory, setHist
                                       <Icon name="eye" className="w-4 h-4" /> View Details
                                     </button>
                                     <div className={`h-px my-1 ${dark ? "bg-slate-700" : "bg-slate-100"}`}></div>
-                                    <button onClick={() => { handleDeleteHistory(item.id); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${dark ? "text-rose-400 hover:bg-rose-900/30" : "text-rose-600 hover:bg-rose-50"}`}>
+                                    <button onClick={() => { setDeleteConfirm({ isOpen: true, id: item.id }); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${dark ? "text-rose-400 hover:bg-rose-900/30" : "text-rose-600 hover:bg-rose-50"}`}>
                                       <Icon name="trash" className="w-4 h-4" /> Delete Event
                                     </button>
                                   </div>
@@ -180,6 +182,35 @@ export default function History({ setPatients, history: externalHistory, setHist
           )}
         </div>
       </div>
+
+      {/* Custom Confirmation Modal */}
+      <Modal isOpen={deleteConfirm.isOpen} onClose={() => setDeleteConfirm({ isOpen: false, id: null })} title="Confirm Deletion" size="sm">
+        <div className="text-center py-4 space-y-6">
+          <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon name="trash" className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h3 className={`text-lg font-black ${textPrimary}`}>Delete Event?</h3>
+            <p className={`text-sm font-medium ${textSecondary} px-4 leading-relaxed`}>
+              Permanently delete this event from history?
+            </p>
+          </div>
+          <div className="flex gap-3 pt-4 px-2">
+            <button 
+              onClick={() => setDeleteConfirm({ isOpen: false, id: null })}
+              className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${dark ? "bg-slate-800 hover:bg-slate-700 text-slate-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"}`}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleDeleteHistory}
+              className="flex-1 bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 active:scale-95"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal isOpen={!!selectedItem} onClose={() => setSelectedItem(null)} title="Event Details" size="md">
         {selectedItem && (
