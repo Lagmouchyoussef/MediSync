@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'authentication',
     'api',
     'doctor',
+    'patient',
     'corsheaders',
 ]
 

@@ -40,10 +40,16 @@ export default function DoctorDashboard() {
     navigate('/');
   };
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: "system", title: "Bienvenue", message: "Bienvenue sur votre nouveau tableau de bord MediSync.", date: new Date().toISOString(), read: false },
-    { id: 2, type: "security", title: "Session active", message: "Une nouvelle connexion a été détectée sur cet appareil.", date: new Date().toISOString(), read: true }
-  ]);
+  const [notifications, setNotifications] = useState(() => {
+    const staticNotifs = [
+      { id: 1, type: "system", title: "Bienvenue", message: "Bienvenue sur votre nouveau tableau de bord MediSync.", date: new Date().toISOString(), read: false },
+      { id: 2, type: "security", title: "Session active", message: "Une nouvelle connexion a été détectée sur cet appareil.", date: new Date().toISOString(), read: true }
+    ];
+    
+    // Filter out notifications dismissed in previous sessions
+    const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+    return staticNotifs.filter(n => !dismissedIds.includes(n.id));
+  });
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const handleMarkRead = (id) => setNotifications(notifications.map((n) => n.id === id ? { ...n, read: true } : n));
@@ -57,6 +63,13 @@ export default function DoctorDashboard() {
         setHistory(updatedHistory);
       } catch (err) {
         console.error("Error logging notification dismissal:", err);
+      }
+      
+      // Persist dismissal locally so it doesn't reappear on refresh
+      const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+      if (!dismissedIds.includes(id)) {
+        dismissedIds.push(id);
+        localStorage.setItem('dismissedNotifications', JSON.stringify(dismissedIds));
       }
     }
     setNotifications(notifications.filter((n) => n.id !== id));
