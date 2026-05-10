@@ -80,6 +80,23 @@ class RegisterView(APIView):
             'token': token.key
         }, status=status.HTTP_201_CREATED)
 
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        role = 'patient'
+        if hasattr(user, 'profile'):
+            role = user.profile.role
+        return Response({
+            'user': {
+                'email': user.email,
+                'role': role,
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            }
+        })
+
 class DeleteAccountView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -87,3 +104,19 @@ class DeleteAccountView(APIView):
         user = request.user
         user.delete()
         return Response({'message': 'Account deleted successfully'}, status=status.HTTP_200_OK)
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        if not user.check_password(current_password):
+            return Response({'error': 'Le mot de passe actuel est incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({'message': 'Mot de passe mis à jour avec succès'})
+

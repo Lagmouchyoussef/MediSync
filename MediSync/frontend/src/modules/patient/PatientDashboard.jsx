@@ -93,13 +93,13 @@ export default function PatientDashboard() {
           <div className="flex items-center gap-3.5">
             <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-[#2da0a8]/20">
-                {(apiService.getUserEmail() || 'P').charAt(0).toUpperCase()}
+                {(apiService.getUserDisplayName() || 'P').charAt(0).toUpperCase()}
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-base font-bold truncate leading-tight text-slate-800">{(apiService.getUserEmail() || 'Patient').split('@')[0]}</p>
-              <p className="text-[11px] font-medium truncate mt-0.5 text-slate-500">Premium Member</p>
+              <p className="text-base font-bold truncate leading-tight text-slate-800">{apiService.getUserDisplayName() || 'Patient'}</p>
+              <p className="text-[11px] font-medium truncate mt-0.5 text-slate-500">{apiService.getUserRole()?.toUpperCase() || 'PATIENT'}</p>
             </div>
             <button onClick={handleLogout} className="p-2.5 rounded-xl transition-all duration-300 bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-500" title="Logout">
               <Icon name="logout" className="w-4 h-4" />
@@ -142,7 +142,7 @@ export default function PatientDashboard() {
             </button>
             <div className="lg:hidden">
               <div className="w-8 h-8 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md">
-                {(apiService.getUserEmail() || 'P').charAt(0).toUpperCase()}
+                {(apiService.getUserDisplayName() || 'P').charAt(0).toUpperCase()}
               </div>
             </div>
           </div>
@@ -151,7 +151,7 @@ export default function PatientDashboard() {
         {/* ==================== MAIN CONTENT ==================== */}
         <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full overflow-y-auto custom-scrollbar">
         <div className="mb-10">
-          <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Welcome, {(apiService.getUserEmail() || 'Guest').split('@')[0]}</h1>
+          <h1 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Welcome, {apiService.getUserDisplayName() || 'Guest'}</h1>
           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Your health is our priority.</p>
         </div>
 
@@ -163,42 +163,22 @@ export default function PatientDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Upcoming Appointment */}
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
             <h3 className="font-black text-slate-800 mb-6 uppercase tracking-widest text-xs">Upcoming Appointment</h3>
-            <div className="bg-[#2da0a8]/5 rounded-3xl p-8 border border-[#2da0a8]/10">
-              <div className="flex justify-between items-start mb-8">
-                <div className="flex gap-4">
-                  <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[#2da0a8]">
-                    <Icon name="appointments" className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <h4 className="font-black text-slate-800 uppercase tracking-tight">Dr. Sarah Khalil</h4>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cardiology</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-black text-[#2da0a8] uppercase">Tomorrow</p>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">14:30</p>
-                </div>
-              </div>
-              <button className="w-full bg-[#2da0a8] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#258a91] transition-all shadow-lg shadow-[#2da0a8]/20">
-                Appointment Details
-              </button>
+            <div className="rounded-3xl p-10 border border-dashed border-slate-200 text-center">
+              <Icon name="appointments" className="w-10 h-10 mx-auto text-[#2da0a8]" />
+              <p className="text-lg font-black text-slate-800 mt-6">Aucun rendez-vous prévu</p>
+              <p className="text-sm text-slate-400 mt-2">Lorsque vous aurez un rendez-vous, il s'affichera ici automatiquement.</p>
             </div>
           </div>
 
-          {/* Documents */}
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
             <h3 className="font-black text-slate-800 mb-6 uppercase tracking-widest text-xs">Recent Documents</h3>
-            <div className="space-y-4">
-              <DocumentItem name="Blood_analysis.pdf" date="May 12, 2024" size="1.2 MB" />
-              <DocumentItem name="Prescription_Flu.pdf" date="May 05, 2024" size="450 KB" />
-              <DocumentItem name="Chest_Xray.jpg" date="April 20, 2024" size="3.5 MB" />
+            <div className="rounded-3xl p-10 border border-dashed border-slate-200 text-center">
+              <Icon name="records" className="w-10 h-10 mx-auto text-[#2da0a8]" />
+              <p className="text-lg font-black text-slate-800 mt-6">Aucun document disponible</p>
+              <p className="text-sm text-slate-400 mt-2">Vos documents médicaux apparaîtront ici lorsque vous en aurez de nouveaux.</p>
             </div>
-            <button className="w-full mt-8 py-3 text-[#2da0a8] text-xs font-black uppercase tracking-widest hover:bg-[#2da0a8]/5 rounded-2xl transition-all">
-              See all documents
-            </button>
           </div>
         </div>
         </main>

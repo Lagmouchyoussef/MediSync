@@ -27,6 +27,8 @@ class ApiService {
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userRole', data.user.role);
         localStorage.setItem('userEmail', data.user.email);
+        localStorage.setItem('userFirstName', data.user.first_name || '');
+        localStorage.setItem('userLastName', data.user.last_name || '');
       }
 
       return data;
@@ -85,10 +87,44 @@ class ApiService {
     }
   }
 
+  async fetchCurrentUser() {
+    try {
+      const token = this.getAuthToken();
+      if (!token) throw new Error('No auth token');
+
+      const response = await fetch(`${this.baseURL}/current-user/`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch current user');
+      }
+
+      if (data.user) {
+        localStorage.setItem('userRole', data.user.role);
+        localStorage.setItem('userEmail', data.user.email);
+        localStorage.setItem('userFirstName', data.user.first_name || '');
+        localStorage.setItem('userLastName', data.user.last_name || '');
+      }
+
+      return data.user;
+    } catch (error) {
+      console.error('Fetch current user error:', error);
+      throw error;
+    }
+  }
+
   logout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userFirstName');
+    localStorage.removeItem('userLastName');
   }
 
   getAuthToken() {
@@ -101,6 +137,27 @@ class ApiService {
 
   getUserEmail() {
     return localStorage.getItem('userEmail');
+  }
+
+  getUserFirstName() {
+    return localStorage.getItem('userFirstName') || '';
+  }
+
+  getUserLastName() {
+    return localStorage.getItem('userLastName') || '';
+  }
+
+  getUserFullName() {
+    const firstName = this.getUserFirstName();
+    const lastName = this.getUserLastName();
+    return `${firstName}${firstName && lastName ? ' ' : ''}${lastName}`.trim();
+  }
+
+  getUserDisplayName() {
+    const fullName = this.getUserFullName();
+    if (fullName) return fullName;
+    const email = this.getUserEmail();
+    return email ? email.split('@')[0] : '';
   }
 
   isAuthenticated() {

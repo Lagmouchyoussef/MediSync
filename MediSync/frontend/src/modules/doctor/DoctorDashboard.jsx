@@ -5,7 +5,7 @@ import apiService from "../../core/services/api";
 import Logo from "../../shared/components/Logo";
 
 // Shared logic and UI
-import { ThemeContext, mockPatients, mockAppointments } from "./DoctorShared";
+import { ThemeContext } from "./DoctorShared";
 import { Icon } from "./DoctorUI";
 
 // Pages
@@ -40,16 +40,7 @@ export default function DoctorDashboard() {
     navigate('/');
   };
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: "appointment", title: "Appointment in 30 min", message: "Ahmed Benali has an appointment at 09:00 with Dr. Hassan Amrani", date: "2026-05-10T08:30:00", read: false },
-    { id: 2, type: "patient", title: "New patient registered", message: "Nadia Filali was added to the system", date: "2026-05-10T08:45:00", read: false },
-    { id: 3, type: "alert", title: "Low stock - Amoxicillin", message: "Amoxicillin stock has fallen below the minimum threshold (250 units remaining)", date: "2026-05-09T16:00:00", read: false },
-    { id: 4, type: "appointment", title: "Appointment cancelled", message: "Nadia Filali's appointment scheduled for tomorrow at 15:00 was cancelled", date: "2026-05-09T14:30:00", read: true },
-    { id: 5, type: "payment", title: "Payment received", message: "Payment of 1,300 DH received for Sara Moussaoui's invoice", date: "2026-05-09T11:00:00", read: true },
-    { id: 6, type: "system", title: "Auto Backup", message: "Daily backup completed successfully at 03:00", date: "2026-05-09T03:00:00", read: true },
-    { id: 7, type: "security", title: "New login", message: "Login detected from a new device - Chrome on Windows", date: "2026-05-08T08:00:00", read: true },
-    { id: 8, type: "alert", title: "Expired medication", message: "3 batches of Amlodipine expire in less than 30 days", date: "2026-05-07T09:00:00", read: true },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const handleMarkRead = (id) => setNotifications(notifications.map((n) => n.id === id ? { ...n, read: true } : n));
@@ -57,7 +48,7 @@ export default function DoctorDashboard() {
   const handleDismiss = (id) => setNotifications(notifications.filter((n) => n.id !== id));
 
   // Global state for patients to persist changes
-  const [patients, setPatients] = useState(mockPatients);
+  const [patients, setPatients] = useState([]);
   const [deletedPatients, setDeletedPatients] = useState([]);
   
   // Navigation states
@@ -65,30 +56,10 @@ export default function DoctorDashboard() {
   const [appointmentsTab, setAppointmentsTab] = useState("manage");
 
   // Invitations state
-  const [invitations, setInvitations] = useState([
-    { id: 1, direction: "sent", patient: "Ahmed Benali", date: "2026-05-12", time: "10:00 AM", type: "General Consultation", status: "Pending" },
-    { id: 2, direction: "received", patient: "Nadia Filali", date: "2026-05-14", time: "02:30 PM", type: "Follow-up", status: "Accepted" },
-    { id: 3, direction: "sent", patient: "Sara Moussaoui", date: "2026-05-15", time: "09:00 AM", type: "Specialist Visit", status: "Declined" },
-    { id: 4, direction: "received", patient: "Karim Tazi", date: "2026-05-16", time: "11:00 AM", type: "Routine Checkup", status: "Pending" },
-  ]);
+  const [invitations, setInvitations] = useState([]);
 
   // History state
-  const [history, setHistory] = useState([
-    { id: 1, type: "Consultation", patient: "Ahmed Benali", user: "Dr. Hassan Amrani", date: "2026-05-10", time: "09:15", description: "Monthly follow-up consultation - Hypertension", category: "medical" },
-    { id: 2, type: "Patient added", patient: "Nadia Filali", user: "Administrator", date: "2026-05-10", time: "08:45", description: "New patient registered in the system", category: "admin" },
-    { id: 3, type: "Appointment", patient: "Fatima Zahra", user: "Dr. Leila Berrada", date: "2026-05-09", time: "16:30", description: "Appointment confirmed for exam - Full blood test", category: "appointment" },
-    { id: 4, type: "Modification", patient: "Sara Moussaoui", user: "Dr. Hassan Amrani", date: "2026-05-09", time: "14:20", description: "Medical record update - New diagnosis diabetes type 2", category: "medical" },
-    { id: 5, type: "Cancellation", patient: "Karim Bennani", user: "Dr. Rachid Tazi", date: "2026-05-09", time: "11:00", description: "Appointment cancelled by patient - Reschedule requested", category: "appointment" },
-    { id: 6, type: "Consultation", patient: "Omar Idrissi", user: "Dr. Rachid Tazi", date: "2026-05-08", time: "15:45", description: "Diabetes control - HbA1c results: 7.2%", category: "medical" },
-    { id: 7, type: "Export", patient: "All", user: "Administrator", date: "2026-05-08", time: "09:00", description: "Export of April data in PDF", category: "admin" },
-    { id: 8, type: "Consultation", patient: "Khadija Tazi", user: "Dr. Leila Berrada", date: "2026-05-07", time: "10:30", description: "First visit - Complete health checkup", category: "medical" },
-    { id: 9, type: "Appointment", patient: "Ahmed Benali", user: "Administrator", date: "2026-05-07", time: "08:15", description: "New appointment scheduled for 15/05", category: "appointment" },
-    { id: 10, type: "Modification", patient: "Youssef El Amrani", user: "Administrator", date: "2026-05-06", time: "17:00", description: "Patient status change: Active → Inactive", category: "admin" },
-    { id: 11, type: "Consultation", patient: "Fatima Zahra", user: "Dr. Leila Berrada", date: "2026-05-06", time: "11:00", description: "Anemia treatment follow-up - Improvement noted", category: "medical" },
-    { id: 12, type: "Login", patient: "-", user: "Dr. Hassan Amrani", date: "2026-05-06", time: "07:45", description: "Logged into system from IP address 192.168.1.100", category: "security" },
-    { id: 13, type: "Alert", patient: "System", user: "System", date: "2026-05-06", time: "06:00", description: "System backup completed successfully", category: "notification" },
-    { id: 14, type: "Reminder", patient: "Ahmed Benali", user: "System", date: "2026-05-05", time: "09:00", description: "Automated SMS reminder sent for tomorrow's appointment", category: "notification" },
-  ]);
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -114,7 +85,7 @@ export default function DoctorDashboard() {
           id: "appointments", 
           label: "Availability", 
           icon: "appointments", 
-          badge: mockAppointments.filter((a) => a.status === "Pending").length,
+          badge: invitations.length,
           subItems: [
             { id: "manage", label: "Manage Setup" },
             { id: "history", label: "Invitation History", badge: invitations.length }
@@ -133,12 +104,20 @@ export default function DoctorDashboard() {
 
   const renderPage = () => {
     switch (activePage) {
-      case "dashboard": return <Dashboard />;
+      case "dashboard": return (
+        <Dashboard
+          patientsCount={patients.length}
+          appointmentCount={invitations.length}
+          historyCount={history.length}
+          notificationsCount={notifications.filter((n) => !n.read).length}
+          upcomingAppointments={invitations}
+        />
+      );
       case "patients": return <Patients patients={patients} setPatients={setPatients} setDeletedPatients={setDeletedPatients} />;
       case "appointments": return <Appointments activeTab={appointmentsTab} setActiveTab={setAppointmentsTab} invitations={invitations} setInvitations={setInvitations} />;
       case "history": return <History deletedPatients={deletedPatients} setDeletedPatients={setDeletedPatients} setPatients={setPatients} history={history} setHistory={setHistory} />;
       case "settings": return <Settings />;
-      default: return <Dashboard />;
+      default: return <Dashboard patientsCount={patients.length} appointmentCount={invitations.length} historyCount={history.length} notificationsCount={notifications.filter((n) => !n.read).length} upcomingAppointments={invitations} />;
     }
   };
 
@@ -276,13 +255,13 @@ export default function DoctorDashboard() {
             <div className="flex items-center gap-3.5">
               <div className="relative">
                 <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-[#2da0a8]/20">
-                  {(apiService.getUserEmail() || 'A').charAt(0).toUpperCase()}
+                  {(apiService.getUserDisplayName() || 'A').charAt(0).toUpperCase()}
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#0a0c10] rounded-full"></div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-base font-bold truncate leading-tight ${darkMode ? "text-white" : "text-slate-800"}`}>Dr. {apiService.getUserEmail()?.split('@')[0] || 'Doctor'}</p>
-                <p className={`text-[11px] font-medium truncate mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>General Practitioner</p>
+                <p className={`text-base font-bold truncate leading-tight ${darkMode ? "text-white" : "text-slate-800"}`}>{apiService.getUserDisplayName() || 'Doctor'}</p>
+                <p className={`text-[11px] font-medium truncate mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{apiService.getUserRole()?.toUpperCase() || 'GENERAL PRACTITIONER'}</p>
               </div>
               <button onClick={handleLogout} className={`p-2.5 rounded-xl transition-all duration-300 ${darkMode ? "bg-slate-800 text-slate-400 hover:bg-red-500/10 hover:text-red-400" : "bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-500"}`} title="Logout">
                 <Icon name="logout" className="w-4 h-4" />
@@ -324,11 +303,7 @@ export default function DoctorDashboard() {
                 />
               </div>
 
-              {/* Quick Action Button (Desktop) */}
-              <button className="hidden xl:flex items-center gap-2 bg-[#2da0a8] text-white px-5 py-3 rounded-2xl text-[13px] font-black uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20 active:scale-95">
-                <Icon name="plus" className="w-4 h-4" />
-                <span>New Action</span>
-              </button>
+
 
               <div className={`h-8 w-px ${darkMode ? "bg-slate-800" : "bg-slate-100"} mx-2 hidden md:block`}></div>
 
@@ -355,7 +330,7 @@ export default function DoctorDashboard() {
               <div ref={userMenuRef} className="relative lg:hidden">
                 <button onClick={() => { setUserMenuOpen(!userMenuOpen); setNotifOpen(false); }} className={`flex items-center gap-2 p-1 rounded-xl transition-all duration-300 ${darkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}>
                   <div className="w-8 h-8 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-lg flex items-center justify-center text-white font-black text-xs shadow-lg shadow-teal-500/10">
-                    {(apiService.getUserEmail() || 'A').charAt(0).toUpperCase()}
+                    {(apiService.getUserDisplayName() || 'A').charAt(0).toUpperCase()}
                   </div>
                   <Icon name="chevronRight" className={`w-3 h-3 transition-transform duration-300 ${userMenuOpen ? "rotate-90" : "rotate-0"} ${headerSubText}`} />
                 </button>

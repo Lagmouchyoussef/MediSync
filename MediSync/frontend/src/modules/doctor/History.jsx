@@ -6,22 +6,7 @@ import { Icon, SearchInput, Badge, Modal } from "./DoctorUI";
 export default function History({ deletedPatients = [], setDeletedPatients, setPatients, history: externalHistory, setHistory: setExternalHistory }) {
   const { dark } = useTheme();
   
-  const [localHistory, setLocalHistory] = useState([
-    { id: 1, type: "Consultation", patient: "Ahmed Benali", user: "Dr. Hassan Amrani", date: "2026-05-10", time: "09:15", description: "Monthly follow-up consultation - Hypertension", category: "medical" },
-    { id: 2, type: "Patient added", patient: "Nadia Filali", user: "Administrator", date: "2026-05-10", time: "08:45", description: "New patient registered in the system", category: "admin" },
-    { id: 3, type: "Appointment", patient: "Fatima Zahra", user: "Dr. Leila Berrada", date: "2026-05-09", time: "16:30", description: "Appointment confirmed for exam - Full blood test", category: "appointment" },
-    { id: 4, type: "Modification", patient: "Sara Moussaoui", user: "Dr. Hassan Amrani", date: "2026-05-09", time: "14:20", description: "Medical record update - New diagnosis diabetes type 2", category: "medical" },
-    { id: 5, type: "Cancellation", patient: "Karim Bennani", user: "Dr. Rachid Tazi", date: "2026-05-09", time: "11:00", description: "Appointment cancelled by patient - Reschedule requested", category: "appointment" },
-    { id: 6, type: "Consultation", patient: "Omar Idrissi", user: "Dr. Rachid Tazi", date: "2026-05-08", time: "15:45", description: "Diabetes control - HbA1c results: 7.2%", category: "medical" },
-    { id: 7, type: "Export", patient: "All", user: "Administrator", date: "2026-05-08", time: "09:00", description: "Export of April data in PDF", category: "admin" },
-    { id: 8, type: "Consultation", patient: "Khadija Tazi", user: "Dr. Leila Berrada", date: "2026-05-07", time: "10:30", description: "First visit - Complete health checkup", category: "medical" },
-    { id: 9, type: "Appointment", patient: "Ahmed Benali", user: "Administrator", date: "2026-05-07", time: "08:15", description: "New appointment scheduled for 15/05", category: "appointment" },
-    { id: 10, type: "Modification", patient: "Youssef El Amrani", user: "Administrator", date: "2026-05-06", time: "17:00", description: "Patient status change: Active → Inactive", category: "admin" },
-    { id: 11, type: "Consultation", patient: "Fatima Zahra", user: "Dr. Leila Berrada", date: "2026-05-06", time: "11:00", description: "Anemia treatment follow-up - Improvement noted", category: "medical" },
-    { id: 12, type: "Login", patient: "-", user: "Dr. Hassan Amrani", date: "2026-05-06", time: "07:45", description: "Logged into system from IP address 192.168.1.100", category: "security" },
-    { id: 13, type: "Alert", patient: "System", user: "System", date: "2026-05-06", time: "06:00", description: "System backup completed successfully", category: "notification" },
-    { id: 14, type: "Reminder", patient: "Ahmed Benali", user: "System", date: "2026-05-05", time: "09:00", description: "Automated SMS reminder sent for tomorrow's appointment", category: "notification" },
-  ]);
+  const [localHistory, setLocalHistory] = useState([]);
 
   const history = externalHistory !== undefined ? externalHistory : localHistory;
   const setHistory = setExternalHistory || setLocalHistory;

@@ -1,24 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import apiService from "../../core/services/api";
 import { useTheme } from "./DoctorShared";
 import { Icon, Modal } from "./DoctorUI";
 
 export default function Settings() {
   const { dark, setDark } = useTheme();
   const [settings, setSettings] = useState({ 
-    firstName: "Hassan",
-    lastName: "Amrani",
-    profileEmail: "hassan.amrani@example.com",
-    profilePhone: "+212 600 123 456",
+    firstName: apiService.getUserFirstName() || "",
+    lastName: apiService.getUserLastName() || "",
+    profileEmail: apiService.getUserEmail() || "",
+    profilePhone: "",
     dob: "",
-    profileAddress: "456 Avenue des FAR, Casablanca",
-    emergencyContact: "Amina Amrani",
-    emergencyPhone: "+212 611 123 456",
-    specialty: "General Practitioner",
-    clinicName: "Al Amal Clinic", 
-    address: "123 Boulevard Mohammed V, Casablanca", 
-    phone: "+212 522 123 456", 
-    email: "contact@cliniquealamal.ma", 
+    profileAddress: "",
+    emergencyContact: "",
+    emergencyPhone: "",
+    specialty: apiService.getUserRole() === 'doctor' ? "General Practitioner" : "Patient",
+    clinicName: "",
+    address: "",
+    phone: "",
+    email: apiService.getUserEmail() || "",
     currency: "MAD", 
     language: "en", 
     smsNotifications: false, 
@@ -34,6 +35,48 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showPasswords, setShowPasswords] = useState(false);
+
+  const [sessionInfo, setSessionInfo] = useState({
+    browser: "Detecting...",
+    location: "Locating..."
+  });
+
+  useEffect(() => {
+    // Detect Browser & OS
+    const getBrowserInfo = () => {
+      const ua = navigator.userAgent;
+      let browser = "Unknown Browser";
+      let os = "Unknown OS";
+      if (ua.includes("Firefox")) browser = "Firefox";
+      else if (ua.includes("Edg")) browser = "Edge";
+      else if (ua.includes("Chrome")) browser = "Chrome";
+      else if (ua.includes("Safari")) browser = "Safari";
+      if (ua.includes("Win")) os = "Windows";
+      else if (ua.includes("Mac")) os = "macOS";
+      else if (ua.includes("Linux")) os = "Linux";
+      else if (ua.includes("Android")) os = "Android";
+      else if (ua.includes("iPhone")) os = "iOS";
+      return `${browser} on ${os}`;
+    };
+
+    setSessionInfo(prev => ({ ...prev, browser: getBrowserInfo() }));
+
+    // Detect Location via IP
+    fetch("https://ipapi.co/json/")
+      .then(res => res.json())
+      .then(data => {
+        if (data.city && data.country_name) {
+          setSessionInfo(prev => ({ ...prev, location: `${data.city}, ${data.country_name}` }));
+        }
+      })
+      .catch(() => {
+        setSessionInfo(prev => ({ ...prev, location: "Unknown Location" }));
+      });
+  }, []);
   
   const handleSave = () => { 
     setSaved(true); 
@@ -43,8 +86,8 @@ export default function Settings() {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/api/delete-account/", {
+      const token = apiService.getAuthToken();
+      const res = await fetch(`${apiService.baseURL}/delete-account/`, {
         method: "DELETE",
         headers: {
           "Authorization": `Token ${token}`
@@ -63,6 +106,45 @@ export default function Settings() {
       console.error(err);
       setIsDeleting(false);
       setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwords.new !== passwords.confirm) {
+      alert("Les mots de passe ne correspondent pas");
+      return;
+    }
+    setIsChangingPassword(true);
+    
+    try {
+      const token = apiService.getAuthToken();
+      const res = await fetch(`${apiService.baseURL}/change-password/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Token ${token}`
+        },
+        body: JSON.stringify({
+          current_password: passwords.current,
+          new_password: passwords.new
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        setIsChangingPassword(false);
+        setShowPasswordModal(false);
+        setPasswords({ current: '', new: '', confirm: '' });
+        alert("Mot de passe mis à jour avec succès !");
+      } else {
+        setIsChangingPassword(false);
+        alert(data.error || "Erreur lors du changement de mot de passe");
+      }
+    } catch (err) {
+      console.error(err);
+      setIsChangingPassword(false);
+      alert("Erreur de connexion au serveur");
     }
   };
 
@@ -300,7 +382,7 @@ export default function Settings() {
                   <h3 className={`font-bold text-base ${textPrimary}`}>Password</h3>
                   <p className={`text-xs mt-1 ${textSecondary}`}>Last changed: 3 months ago</p>
                 </div>
-                <button className={`px-5 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-100 text-slate-700"}`}>
+                <button onClick={() => setShowPasswordModal(true)} className={`px-5 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-100 text-slate-700"}`}>
                   Change Password
                 </button>
               </div>
@@ -332,7 +414,7 @@ export default function Settings() {
                       </div>
                       <div>
                         <p className={`font-bold text-sm ${textPrimary}`}>Current browser</p>
-                        <p className={`text-xs mt-0.5 ${textSecondary}`}>Chrome on Windows • Paris, France</p>
+                        <p className={`text-xs mt-0.5 ${textSecondary}`}>{sessionInfo.browser} • {sessionInfo.location}</p>
                       </div>
                     </div>
                     <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg">Active</span>
@@ -405,6 +487,72 @@ export default function Settings() {
                   Deleting...
                 </>
               ) : "Yes, Delete Account"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} title="Change Password">
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Current Password</label>
+              <div className="relative">
+                <input 
+                  type={showPasswords ? "text" : "password"}
+                  className={`${inputClass} pr-10`} 
+                  value={passwords.current}
+                  onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                />
+                <button type="button" onClick={() => setShowPasswords(!showPasswords)} className={`absolute right-3 top-2.5 ${dark ? "text-slate-400 hover:text-slate-300" : "text-slate-500 hover:text-slate-700"}`}>
+                  <Icon name={showPasswords ? "eyeOff" : "eye"} className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>New Password</label>
+              <div className="relative">
+                <input 
+                  type={showPasswords ? "text" : "password"}
+                  className={`${inputClass} pr-10`} 
+                  value={passwords.new}
+                  onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                />
+                <button type="button" onClick={() => setShowPasswords(!showPasswords)} className={`absolute right-3 top-2.5 ${dark ? "text-slate-400 hover:text-slate-300" : "text-slate-500 hover:text-slate-700"}`}>
+                  <Icon name={showPasswords ? "eyeOff" : "eye"} className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Confirm New Password</label>
+              <div className="relative">
+                <input 
+                  type={showPasswords ? "text" : "password"}
+                  className={`${inputClass} pr-10`} 
+                  value={passwords.confirm}
+                  onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                />
+                <button type="button" onClick={() => setShowPasswords(!showPasswords)} className={`absolute right-3 top-2.5 ${dark ? "text-slate-400 hover:text-slate-300" : "text-slate-500 hover:text-slate-700"}`}>
+                  <Icon name={showPasswords ? "eyeOff" : "eye"} className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800/10">
+            <button 
+              onClick={() => setShowPasswordModal(false)}
+              className={`px-6 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-50 text-slate-500"}`}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleChangePassword}
+              disabled={isChangingPassword || !passwords.current || !passwords.new || passwords.new !== passwords.confirm}
+              className={`px-6 py-2.5 bg-[#2da0a8] hover:bg-[#258a91] text-white rounded-xl transition-all font-bold text-sm shadow-lg shadow-teal-500/20 flex items-center gap-2 ${(isChangingPassword || !passwords.current || !passwords.new || passwords.new !== passwords.confirm) ? "opacity-70 cursor-not-allowed" : ""}`}
+            >
+              {isChangingPassword ? "Saving..." : "Update Password"}
             </button>
           </div>
         </div>

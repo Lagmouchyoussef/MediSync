@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTheme, mockPatients, getPatientId } from "./DoctorShared";
+import apiService from "../../core/services/api";
 import { Icon, Badge, Modal } from "./DoctorUI";
 
 export default function Appointments({ activeTab: externalActiveTab, setActiveTab: setExternalActiveTab, invitations = [], setInvitations }) {
@@ -234,14 +235,12 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
               </div>
               <div>
                 <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Available Time</label>
-                <select className={inputClass} defaultValue="">
-                  <option value="" disabled>Set your availability first</option>
-                  <option value="09:00">09:00 AM</option>
-                  <option value="10:00">10:00 AM</option>
-                  <option value="11:00">11:00 AM</option>
-                  <option value="14:00">02:00 PM</option>
-                  <option value="15:00">03:00 PM</option>
-                </select>
+                <input 
+                  type="time" 
+                  className={inputClass} 
+                  value={invitationForm.time}
+                  onChange={(e) => setInvitationForm({...invitationForm, time: e.target.value})}
+                />
               </div>
             </div>
 
@@ -383,7 +382,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
             <div className="flex justify-between items-start mb-6 border-b pb-6 border-slate-200 dark:border-slate-700">
               <div>
                 <h4 className={`text-lg font-black ${textPrimary}`}>Appointment Invitation</h4>
-                <p className={`${textSecondary} text-xs font-bold mt-1 uppercase tracking-widest`}>From: Dr. {mockPatients.length > 0 ? "Doctor" : "Doctor"}</p>
+                <p className={`${textSecondary} text-xs font-bold mt-1 uppercase tracking-widest`}>From: Dr. {apiService.getUserDisplayName() || "Your Name"}</p>
               </div>
               <div className="w-12 h-12 bg-[#2da0a8] text-white rounded-xl flex items-center justify-center">
                 <Icon name="calendar" className="w-6 h-6" />

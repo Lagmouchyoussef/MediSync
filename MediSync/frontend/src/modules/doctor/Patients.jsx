@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useTheme, mockPatients, getPatientId } from "./DoctorShared";
+import { useTheme, getPatientId } from "./DoctorShared";
 import { Icon, Modal, Badge, SearchInput } from "./DoctorUI";
 
 export default function Patients({ patients, setPatients, setDeletedPatients }) {
