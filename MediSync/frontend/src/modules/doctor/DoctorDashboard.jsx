@@ -190,9 +190,9 @@ export default function DoctorDashboard() {
   };
 
   const renderPage = () => {
-    const pCount = dashboardStats?.summary?.total_patients ?? (Array.isArray(patients) ? patients.length : 0);
-    const iCount = dashboardStats?.summary?.total_appointments ?? (Array.isArray(invitations) ? invitations.length : 0);
-    const hCount = dashboardStats?.summary?.total_history ?? (Array.isArray(history) ? history.length : 0);
+    const pCount = Array.isArray(patients) ? patients.length : (dashboardStats?.summary?.total_patients ?? 0);
+    const iCount = Array.isArray(invitations) ? invitations.length : (dashboardStats?.summary?.total_appointments ?? 0);
+    const hCount = Array.isArray(history) ? history.length : (dashboardStats?.summary?.total_history ?? 0);
     const nUnread = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
     const safeInvs = Array.isArray(invitations) ? invitations : [];
 

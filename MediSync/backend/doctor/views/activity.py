@@ -1,4 +1,5 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
+from rest_framework import decorators, response
 from api.models import Activity
 from ..serializers import ActivitySerializer
 
@@ -13,10 +14,12 @@ class ActivityViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Activity.objects.all().order_by('-timestamp')
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-    @decorators.action(detail=False, methods=['post'])
-    def clear_all(self, request):
-        Activity.objects.all().delete()
-        return response.Response({'status': 'All activity logs cleared'})
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except Exception as e:
+            # Handle cases where activity doesn't exist or doesn't belong to user
+            return response.Response(
+                {'error': 'Activity not found or access denied'},
+                status=status.HTTP_404_NOT_FOUND
+            )
