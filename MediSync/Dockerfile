@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     netcat-openbsd \
+    libjpeg-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -27,8 +29,8 @@ RUN mkdir -p /app/staticfiles /app/media /app/static /app/templates
 # Copy backend code
 COPY backend/ /app/
 
-# Make entrypoint script executable
-RUN chmod +x /app/entrypoint.sh
+# Make entrypoint script executable and fix line endings
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Copy frontend build to backend static files
 COPY --from=frontend-builder /app/frontend/dist /app/static/
