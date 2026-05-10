@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "./DoctorShared";
-import { Icon } from "./DoctorUI";
+import { Icon, Modal } from "./DoctorUI";
 
 export default function Settings() {
   const { dark } = useTheme();
@@ -28,6 +28,7 @@ export default function Settings() {
   });
   const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const handleSave = () => { 
     setSaved(true); 
@@ -35,27 +36,25 @@ export default function Settings() {
   };
 
   const handleDeleteAccount = async () => {
-    if (window.confirm("Are you sure you want to delete your account? This action is irreversible.")) {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:8000/api/auth/delete-account/", {
-          method: "DELETE",
-          headers: {
-            "Authorization": `Token ${token}`
-          }
-        });
-        
-        if (res.ok) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          window.location.href = "/";
-        } else {
-          alert("Failed to delete account. Please try again.");
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8000/api/auth/delete-account/", {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Token ${token}`
         }
-      } catch (err) {
-        console.error(err);
-        alert("An error occurred while deleting your account.");
+      });
+      
+      if (res.ok) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/";
+      } else {
+        setShowDeleteConfirm(false);
       }
+    } catch (err) {
+      console.error(err);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -247,13 +246,48 @@ export default function Settings() {
                 <h3 className={`font-bold mb-2 flex items-center gap-2 ${dark ? "text-red-400" : "text-red-800"}`}><Icon name="alert" className="w-4 h-4" /> Danger Zone</h3>
                 <p className={`text-xs mb-6 ${dark ? "text-red-900/60" : "text-red-600"}`}>This action is irreversible and will delete all your data.</p>
                 <div className="flex flex-wrap gap-3">
-                  <button onClick={handleDeleteAccount} className="px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-bold text-sm">Delete Account</button>
+                  <button onClick={() => setShowDeleteConfirm(true)} className="px-6 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-bold text-sm">Delete Account</button>
                 </div>
               </div>
             </motion.div>
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Account">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500">
+              <Icon name="alert" className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className={`text-lg font-bold ${textPrimary}`}>Are you sure you want to delete your account?</h3>
+              <p className={`text-sm mt-1 ${textSecondary}`}>This action is completely irreversible.</p>
+            </div>
+          </div>
+          
+          <div className={`p-4 rounded-xl border ${dark ? "bg-red-900/10 border-red-900/20" : "bg-red-50 border-red-100"} text-sm ${dark ? "text-red-400" : "text-red-600"}`}>
+            <strong>Warning:</strong> Deleting your account will permanently erase your profile, settings, and all associated clinical data from the MediSync system. You will not be able to recover this information.
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-800/10">
+            <button 
+              onClick={() => setShowDeleteConfirm(false)}
+              className={`px-6 py-2.5 border rounded-xl transition-colors font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-50 text-slate-500"}`}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleDeleteAccount}
+              className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all font-bold text-sm shadow-lg shadow-red-500/20"
+            >
+              Yes, Delete Account
+            </button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 }
