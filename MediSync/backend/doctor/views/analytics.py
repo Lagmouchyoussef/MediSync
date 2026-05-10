@@ -55,7 +55,7 @@ class AnalyticsView(APIView):
 
         # Patient Demographics (Gender)
         gender_stats = Patient.objects.filter(doctor=user).values('gender').annotate(count=Count('id'))
-        
+
         return Response({
             'summary': {
                 'total_patients': patients_count,
