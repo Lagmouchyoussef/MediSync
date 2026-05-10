@@ -41,6 +41,7 @@ class Appointment(models.Model):
     time = models.TimeField()
     status = models.CharField(max_length=20, choices=(('Pending', 'Pending'), ('Confirmed', 'Confirmed'), ('Cancelled', 'Cancelled')), default='Pending')
     type = models.CharField(max_length=50, default='Consultation')
+    notes = models.TextField(blank=True, null=True)  # Notes field for appointment details
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Activity(models.Model):

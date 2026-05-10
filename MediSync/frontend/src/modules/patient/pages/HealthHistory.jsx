@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../components/PatientShared";
 import { Icon, Badge, Modal } from "../components/PatientUI";
+import apiService from "../../../core/services/api";
 
 export default function HealthHistory({ history, setHistory }) {
   const { dark } = useTheme();
@@ -23,11 +24,11 @@ export default function HealthHistory({ history, setHistory }) {
   }, []);
 
   const categories = [
-    { id: "all", label: "All", icon: "activity" },
-    { id: "medical", label: "Medical", icon: "heart" },
-    { id: "appointment", label: "Appointment", icon: "calendar" },
+    { id: "all", label: "Tout", icon: "activity" },
+    { id: "medical", label: "Médical", icon: "heart" },
+    { id: "appointment", label: "Rendez-vous", icon: "calendar" },
     { id: "admin", label: "Administration", icon: "settings" },
-    { id: "security", label: "Security", icon: "shield" },
+    { id: "security", label: "Sécurité", icon: "shield" },
     { id: "notification", label: "Notifications", icon: "bell" }
   ];
 
@@ -79,8 +80,8 @@ export default function HealthHistory({ history, setHistory }) {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-black tracking-tight ${textPrimary}`}>Activity History</h1>
-          <p className={`text-xs font-bold uppercase tracking-widest ${textSecondary}`}>Track all operations and system events</p>
+          <h1 className={`text-2xl font-black tracking-tight ${textPrimary}`}>Historique de Santé</h1>
+          <p className={`text-xs font-bold uppercase tracking-widest ${textSecondary}`}>Suivez toutes les opérations et événements du système</p>
         </div>
         <div className="flex items-center gap-3">
           <button className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${dark ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
@@ -103,7 +104,7 @@ export default function HealthHistory({ history, setHistory }) {
                 type="text" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search actions, records, or dates..." 
+                placeholder="Rechercher des actions, dossiers ou dates..." 
                 className={`w-full pl-11 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#2da0a8] focus:border-transparent outline-none text-sm transition-all ${dark ? "bg-[#0a0c10] border-[#1e293b] text-white placeholder-slate-500" : "bg-white border-slate-200 text-slate-800 shadow-sm"}`} 
               />
             </div>
@@ -130,7 +131,7 @@ export default function HealthHistory({ history, setHistory }) {
             {filteredHistory.length === 0 ? (
               <div className="text-center py-12">
                 <Icon name="history" className={`w-12 h-12 mx-auto mb-3 ${dark ? "text-gray-600" : "text-gray-300"}`} />
-                <p className={textSecondary}>No elements found</p>
+                <p className={textSecondary}>Aucun élément trouvé</p>
               </div>
             ) : (
               filteredHistory.map((item, index) => (
@@ -184,11 +185,11 @@ export default function HealthHistory({ history, setHistory }) {
                                 >
                                   <div className="py-1">
                                     <button onClick={() => { setSelectedItem(item); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${dark ? "text-slate-300 hover:bg-slate-700" : "text-slate-700 hover:bg-slate-50"}`}>
-                                      <Icon name="eye" className="w-4 h-4 text-[#2da0a8]" /> View Details
+                                      <Icon name="eye" className="w-4 h-4 text-[#2da0a8]" /> Voir les Détails
                                     </button>
                                     <div className={`h-px my-1 ${dark ? "bg-slate-700" : "bg-slate-100"}`}></div>
                                     <button onClick={() => { setDeleteConfirm({ isOpen: true, id: item.id }); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${dark ? "text-rose-400 hover:bg-rose-900/30" : "text-rose-600 hover:bg-rose-50"}`}>
-                                      <Icon name="trash" className="w-4 h-4 text-rose-500" /> Delete Record
+                                      <Icon name="trash" className="w-4 h-4 text-rose-500" /> Supprimer le Dossier
                                     </button>
                                   </div>
                                 </motion.div>
@@ -200,7 +201,7 @@ export default function HealthHistory({ history, setHistory }) {
                       <p className={`text-sm mb-2 pr-8 ${dark ? "text-gray-300" : "text-gray-600"}`}>{item.details}</p>
                       <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${dark ? "text-gray-600" : "text-gray-400"}`}>
                         <Icon name="users" className="w-3.5 h-3.5" />
-                        <span>By You</span>
+                        <span>Par Vous</span>
                       </div>
                     </div>
                   </div>
@@ -212,20 +213,20 @@ export default function HealthHistory({ history, setHistory }) {
       </div>
 
       {/* Confirmation Modal */}
-      <Modal isOpen={deleteConfirm.isOpen} onClose={() => setDeleteConfirm({ isOpen: false, id: null })} title="Confirm Deletion" size="sm">
+       <Modal isOpen={deleteConfirm.isOpen} onClose={() => setDeleteConfirm({ isOpen: false, id: null })} title="Confirmer la Suppression" size="sm">
         <div className="text-center py-4 space-y-6">
           <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <Icon name="trash" className="w-10 h-10" />
           </div>
           <div className="space-y-2">
-            <h3 className={`text-lg font-black ${textPrimary}`}>Delete Event?</h3>
+            <h3 className={`text-lg font-black ${textPrimary}`}>Supprimer l'Événement ?</h3>
             <p className={`text-sm font-medium ${textSecondary} px-4 leading-relaxed`}>
-              Permanently delete this event from history?
+              Supprimer définitivement cet événement de l'historique ?
             </p>
           </div>
           <div className="flex gap-3 pt-4 px-2">
-            <button onClick={() => setDeleteConfirm({ isOpen: false, id: null })} className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${dark ? "bg-slate-800 hover:bg-slate-700 text-slate-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"}`}>Cancel</button>
-            <button onClick={handleDeleteHistory} className="flex-1 bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 active:scale-95">Delete</button>
+            <button onClick={() => setDeleteConfirm({ isOpen: false, id: null })} className={`flex-1 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${dark ? "bg-slate-800 hover:bg-slate-700 text-slate-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"}`}>Annuler</button>
+            <button onClick={handleDeleteHistory} className="flex-1 bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 active:scale-95">Supprimer</button>
           </div>
         </div>
       </Modal>

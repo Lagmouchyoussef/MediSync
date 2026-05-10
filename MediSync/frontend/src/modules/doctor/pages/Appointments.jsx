@@ -25,6 +25,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
   const [showPreview, setShowPreview] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null });
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: "" });
   
   // Support both controlled and uncontrolled usage
   const [localActiveTab, setLocalActiveTab] = useState("manage");
@@ -78,7 +79,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
         end_time: endTime
       });
       await apiService.createActivity("Updated Availability", `New hours: ${startTime} - ${endTime} for ${availableDays.join(', ')}`, "success");
-      alert("Availability saved successfully in database!");
+      setSuccessModal({ isOpen: true, message: "Planning de disponibilité enregistré avec succès dans la base de données !" });
     } catch (err) {
       alert("Error saving availability: " + err.message);
     } finally {
@@ -106,7 +107,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
       await apiService.createActivity("Sent Invitation", `Invitation sent to ${selectedPatient.name} for ${invitationForm.date}.`);
       setShowPreview(false);
       setInvitationForm({ ...invitationForm, patientId: "", time: "", notes: "" });
-      alert("Invitation sent successfully!");
+      setSuccessModal({ isOpen: true, message: "Invitation envoyée avec succès !" });
     } catch (err) {
       alert(err.message || "Error sending invitation");
     } finally {
@@ -623,6 +624,29 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
               className="flex-1 bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-500/20 active:scale-95"
             >
               Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal isOpen={successModal.isOpen} onClose={() => setSuccessModal({ isOpen: false, message: "" })} title="Succès" size="sm">
+        <div className="text-center py-6 space-y-6">
+          <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+            <Icon name="check" className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h3 className={`text-xl font-black ${textPrimary}`}>Opération Réussie</h3>
+            <p className={`text-sm font-medium ${textSecondary} px-6 leading-relaxed`}>
+              {successModal.message}
+            </p>
+          </div>
+          <div className="pt-4 px-2">
+            <button 
+              onClick={() => setSuccessModal({ isOpen: false, message: "" })}
+              className="w-full bg-[#2da0a8] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20 active:scale-95"
+            >
+              D'accord
             </button>
           </div>
         </div>

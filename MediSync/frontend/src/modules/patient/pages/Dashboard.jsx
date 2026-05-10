@@ -142,11 +142,11 @@ export default function Dashboard({ onNavigate, appointments = [], notifications
               <div key={idx} onClick={() => onNavigate("appointments")} className={`p-5 rounded-2xl border transition-all hover:scale-[1.02] cursor-pointer ${dark ? "bg-[#0a0c10] border-[#1e293b] hover:bg-slate-800" : "bg-slate-50 border-slate-100 hover:bg-white hover:shadow-md"}`}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-[#2da0a8]/10 text-[#2da0a8] flex items-center justify-center font-black text-xs">
-                    {apt.doctor?.charAt(0) || "D"}
+                    {apt.doctor_name?.charAt(0) || "D"}
                   </div>
                   <div>
-                    <p className={`text-[13px] font-black ${textPrimary}`}>{apt.doctor}</p>
-                    <p className={`text-[10px] font-bold ${textSecondary}`}>{apt.specialty || apt.type}</p>
+                    <p className={`text-[13px] font-black ${textPrimary}`}>{apt.doctor_name}</p>
+                    <p className={`text-[10px] font-bold ${textSecondary}`}>{apt.doctor_specialty || apt.type}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">

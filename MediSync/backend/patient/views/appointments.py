@@ -46,7 +46,12 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
         if appointment.patient_user != request.user:
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
         
-        # Patients can only update reason or notes, or cancel
+        # Patients can only update notes or cancel
+        allowed_fields = {'notes', 'status'}
+        for field in request.data:
+            if field not in allowed_fields:
+                return Response({"error": f"Patients can only update {', '.join(allowed_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
+        
         if 'status' in request.data and request.data['status'] not in ['Cancelled']:
              return Response({"error": "Patients can only cancel appointments"}, status=status.HTTP_400_BAD_REQUEST)
              

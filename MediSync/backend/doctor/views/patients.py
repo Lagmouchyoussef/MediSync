@@ -14,7 +14,7 @@ class PatientViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Patient.objects.all().order_by('-created_at')
+        return Patient.objects.filter(doctor=self.request.user).order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

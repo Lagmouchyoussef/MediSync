@@ -10,7 +10,7 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Availability.objects.all()
+        return Availability.objects.filter(doctor=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user)
@@ -44,10 +44,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Appointment.objects.all().order_by('date', 'time')
+        return Appointment.objects.filter(doctor=self.request.user).order_by('date', 'time')
 
     def perform_create(self, serializer):
         appointment = serializer.save(doctor=self.request.user)
+        
+        # Ensure patient_user is linked if patient record is provided
+        if appointment.patient and not appointment.patient_user:
+            appointment.patient_user = appointment.patient.user
+            appointment.save()
+            
         # If the doctor creates it, it's like an invitation
         if appointment.patient_user:
             Notification.objects.create(
@@ -74,7 +80,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
             
             Activity.objects.create(
-                user=appointment.patient_user,
+                user=appointment.patient_user or appointment.doctor,
                 action=f"Rendez-vous {new_status}",
                 details=f"Consultation avec Dr. {self.request.user.get_full_name()}",
                 type="success" if new_status == 'Confirmed' else "warning"

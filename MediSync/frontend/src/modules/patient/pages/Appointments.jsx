@@ -55,7 +55,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
         await apiService.deleteAppointment(apt.id);
         onAddToHistory(
           "Appointment Deleted", 
-          `Appointment with ${apt.doctor} on ${apt.date} was removed and archived.`, 
+          `Appointment with ${apt.doctor_name} on ${apt.date} was removed and archived.`, 
           "appointment"
         );
         setAppointments(appointments.filter(a => a.id !== deleteConfirm.id));
@@ -126,8 +126,8 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
       {/* Header & Navigation */}
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Appointments</h1>
-          <p className={`${textSecondary} text-sm font-bold uppercase tracking-widest`}>Manage your reservations and healthcare requests</p>
+          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Rendez-vous</h1>
+          <p className={`${textSecondary} text-sm font-bold uppercase tracking-widest`}>Gérez vos réservations et demandes de soins</p>
         </div>
         
         {/* Underline Tabs - Doctor Style */}
@@ -140,7 +140,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                 : `${dark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`
             }`}
           >
-            My Reservations
+            Mes Réservations
             {activeTab === "list" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2da0a8] rounded-t-full shadow-[0_-2px_8px_rgba(45,160,168,0.5)]"></div>
             )}
@@ -154,7 +154,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                 : `${dark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`
             }`}
           >
-            Book Appointment
+            Prendre rendez-vous
             {activeTab === "book" && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2da0a8] rounded-t-full shadow-[0_-2px_8px_rgba(45,160,168,0.5)]"></div>
             )}
@@ -166,13 +166,13 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
         {activeTab === "list" ? (
           <motion.div key="list" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
             <div className={cardClass}>
-              <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-teal-500/10 text-teal-600 rounded-2xl flex items-center justify-center">
                   <Icon name="calendar" className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-black ${textPrimary}`}>All Appointments</h3>
-                  <p className={`${textSecondary} text-xs font-bold`}>View and manage your consultation history</p>
+                  <h3 className={`text-xl font-black ${textPrimary}`}>Toutes les Réservations</h3>
+                  <p className={`${textSecondary} text-xs font-bold`}>Consultez et gérez l'historique de vos consultations</p>
                 </div>
               </div>
 
@@ -180,10 +180,10 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className={`border-b ${dark ? "border-[#1e293b]" : "border-slate-100"}`}>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Doctor</th>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Specialty</th>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Date & Time</th>
-                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Status</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Médecin</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Spécialité</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Date & Heure</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Statut</th>
                       <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary} text-right`}>Actions</th>
                     </tr>
                   </thead>
@@ -193,12 +193,12 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                         <td className="py-5">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md">
-                              {apt.doctor?.charAt(0) || "D"}
+                              {apt.doctor_name?.charAt(0) || "D"}
                             </div>
-                            <span className={`text-sm font-bold ${textPrimary}`}>{apt.doctor}</span>
+                            <span className={`text-sm font-bold ${textPrimary}`}>{apt.doctor_name}</span>
                           </div>
                         </td>
-                        <td className="py-5 text-sm font-medium text-slate-500 dark:text-slate-400">{apt.specialty || apt.type}</td>
+                        <td className="py-5 text-sm font-medium text-slate-500 dark:text-slate-400">{apt.doctor_specialty || apt.type}</td>
                         <td className="py-5">
                           <p className={`text-sm font-bold ${textPrimary}`}>{new Date(apt.date).toLocaleDateString()}</p>
                           <p className={`text-[10px] font-black uppercase tracking-widest text-[#2da0a8]`}>{apt.time}</p>
@@ -234,7 +234,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                       <tr>
                         <td colSpan="5" className="py-10 text-center">
                           <Icon name="calendar" className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                          <p className={`text-xs font-bold uppercase tracking-widest ${textSecondary}`}>No appointments found</p>
+                          <p className={`text-xs font-bold uppercase tracking-widest ${textSecondary}`}>Aucun rendez-vous trouvé</p>
                         </td>
                       </tr>
                     )}
@@ -334,7 +334,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
           <div className="space-y-6">
             <div className="flex items-center gap-6 p-6 rounded-[2rem] bg-gradient-to-br from-[#2da0a8] to-blue-600 text-white shadow-xl">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"><Icon name="calendar" className="w-8 h-8" /></div>
-              <div><h4 className="text-xl font-black">{selectedApt.doctor}</h4><p className="text-sm font-bold opacity-90">{selectedApt.specialty}</p></div>
+              <div><h4 className="text-xl font-black">{selectedApt.doctor_name}</h4><p className="text-sm font-bold opacity-90">{selectedApt.doctor_specialty}</p></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Date</p><p className="text-sm font-bold">{new Date(selectedApt.date).toLocaleDateString()}</p></div>

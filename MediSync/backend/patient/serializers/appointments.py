@@ -10,6 +10,6 @@ class PatientAppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = [
             'id', 'doctor', 'doctor_name', 'doctor_specialty', 'doctor_image',
-            'date', 'time', 'reason', 'status', 'notes', 'created_at'
+            'date', 'time', 'type', 'status', 'notes', 'created_at'
         ]
-        read_only_fields = ('created_at', 'status')
+        read_only_fields = ('id', 'doctor', 'doctor_name', 'doctor_specialty', 'doctor_image', 'created_at')
