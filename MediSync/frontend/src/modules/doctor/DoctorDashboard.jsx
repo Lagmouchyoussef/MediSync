@@ -151,7 +151,7 @@ export default function DoctorDashboard() {
   const sidebarBg = darkMode ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-slate-200";
 
   return (
-    <ThemeContext.Provider value={{ dark: darkMode, toggle: () => setDarkMode(!darkMode) }}>
+    <ThemeContext.Provider value={{ dark: darkMode, toggle: () => setDarkMode(!darkMode), setDark: setDarkMode }}>
       <div className={`min-h-screen ${bgMain} flex transition-colors duration-300 overflow-hidden`}>
         {mobileMenuOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setMobileMenuOpen(false)} />}
 

@@ -4,7 +4,7 @@ import { useTheme } from "./DoctorShared";
 import { Icon, Modal } from "./DoctorUI";
 
 export default function Settings() {
-  const { dark } = useTheme();
+  const { dark, setDark } = useTheme();
   const [settings, setSettings] = useState({ 
     firstName: "Hassan",
     lastName: "Amrani",
@@ -21,14 +21,19 @@ export default function Settings() {
     email: "contact@cliniquealamal.ma", 
     currency: "MAD", 
     language: "en", 
-    notifications: true, 
-    emailNotifications: true, 
     smsNotifications: false, 
-    autoBackup: true 
+    autoBackup: true,
+    timeZone: "Europe/Paris (UTC+1)",
+    theme: "dark",
+    fontSize: "medium",
+    animations: true,
+    confirmDeletion: true,
+    autoReminders: true
   });
   const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const handleSave = () => { 
     setSaved(true); 
@@ -36,9 +41,10 @@ export default function Settings() {
   };
 
   const handleDeleteAccount = async () => {
+    setIsDeleting(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/api/auth/delete-account/", {
+      const res = await fetch("http://localhost:8000/api/delete-account/", {
         method: "DELETE",
         headers: {
           "Authorization": `Token ${token}`
@@ -50,10 +56,12 @@ export default function Settings() {
         localStorage.removeItem("user");
         window.location.href = "/";
       } else {
+        setIsDeleting(false);
         setShowDeleteConfirm(false);
       }
     } catch (err) {
       console.error(err);
+      setIsDeleting(false);
       setShowDeleteConfirm(false);
     }
   };
@@ -62,6 +70,7 @@ export default function Settings() {
     { id: "profile", label: "My Profile", icon: "user" },
     { id: "general", label: "Clinic Options", icon: "settings" }, 
     { id: "notifications", label: "Notifications", icon: "bell" }, 
+    { id: "preferences", label: "Preferences", icon: "dashboard" },
     { id: "security", label: "Security", icon: "eye" }
   ];
 
@@ -175,6 +184,113 @@ export default function Settings() {
             </motion.div>
           )}
 
+          {activeTab === "preferences" && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
+              
+              {/* Language & Region */}
+              <div className="space-y-4">
+                <h3 className={`text-lg font-black ${textPrimary} flex items-center gap-2`}>
+                  <div className="w-1.5 h-6 bg-[#2da0a8] rounded-full"></div>
+                  Language & Region
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Language</label>
+                    <select value={settings.language} onChange={(e) => setSettings({ ...settings, language: e.target.value })} className={inputClass}>
+                      <option value="en">English</option>
+                      <option value="fr">Français</option>
+                      <option value="ar">العربية</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Time Zone</label>
+                    <select value={settings.timeZone} onChange={(e) => setSettings({ ...settings, timeZone: e.target.value })} className={inputClass}>
+                      <option>Europe/Paris (UTC+1)</option>
+                      <option>Africa/Casablanca (UTC+1)</option>
+                      <option>America/New_York (UTC-5)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Interface */}
+              <div className="space-y-4">
+                <h3 className={`text-lg font-black ${textPrimary} flex items-center gap-2`}>
+                  <div className="w-1.5 h-6 bg-[#2da0a8] rounded-full"></div>
+                  Interface
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-widest mb-4 ${dark ? "text-slate-500" : "text-slate-400"}`}>Theme</label>
+                    <div className="flex gap-3">
+                      {["Light", "Dark", "Auto"].map(t => (
+                        <button 
+                          key={t}
+                          onClick={() => {
+                            setSettings({...settings, theme: t.toLowerCase()});
+                            if (t === "Light") setDark(false);
+                            if (t === "Dark") setDark(true);
+                            if (t === "Auto") {
+                              const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                              setDark(isDark);
+                            }
+                          }}
+                          className={`flex-1 py-3 rounded-xl border text-xs font-bold transition-all ${
+                            settings.theme === t.toLowerCase() 
+                              ? "bg-[#2da0a8] text-white border-[#2da0a8] shadow-lg shadow-teal-500/20" 
+                              : `${dark ? "bg-slate-900 border-slate-800 text-slate-400" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"}`
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Font Size</label>
+                    <select value={settings.fontSize} onChange={(e) => setSettings({ ...settings, fontSize: e.target.value })} className={inputClass}>
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Behavior */}
+              <div className="space-y-4">
+                <h3 className={`text-lg font-black ${textPrimary} flex items-center gap-2`}>
+                  <div className="w-1.5 h-6 bg-[#2da0a8] rounded-full"></div>
+                  Behavior
+                </h3>
+                <div className="space-y-3">
+                  {[
+                    { key: "animations", label: "Animations", desc: "Enable interface transitions and animations" },
+                    { key: "confirmDeletion", label: "Confirmation before deletion", desc: "Always ask before deleting important items" },
+                    { key: "autoReminders", label: "Automatic reminders", desc: "Send automated alerts to patients and staff" }
+                  ].map(item => (
+                    <div key={item.key} className={`flex items-center justify-between p-4 rounded-xl border ${dark ? "bg-slate-900/30 border-slate-800" : "bg-slate-50 border-slate-100"}`}>
+                      <div>
+                        <p className={`text-sm font-bold ${textPrimary}`}>{item.label}</p>
+                        <p className={`text-[10px] ${textSecondary}`}>{item.desc}</p>
+                      </div>
+                      <button 
+                        onClick={() => setSettings({ ...settings, [item.key]: !settings[item.key] })} 
+                        className={`relative w-10 h-5 rounded-full transition-colors ${settings[item.key] ? "bg-[#2da0a8]" : dark ? "bg-slate-800" : "bg-slate-300"}`}
+                      >
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${settings[item.key] ? "translate-x-5" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-slate-800/10">
+                <button onClick={handleSave} className="px-8 py-2.5 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20">{saved ? "✓ Saved !" : "Save Preferences"}</button>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === "security" && (
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
               
@@ -280,9 +396,15 @@ export default function Settings() {
             </button>
             <button 
               onClick={handleDeleteAccount}
-              className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all font-bold text-sm shadow-lg shadow-red-500/20"
+              disabled={isDeleting}
+              className={`px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all font-bold text-sm shadow-lg shadow-red-500/20 flex items-center gap-2 ${isDeleting ? "opacity-70 cursor-not-allowed" : ""}`}
             >
-              Yes, Delete Account
+              {isDeleting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Deleting...
+                </>
+              ) : "Yes, Delete Account"}
             </button>
           </div>
         </div>
