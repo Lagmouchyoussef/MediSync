@@ -11,7 +11,12 @@ class ActivityViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Activity.objects.filter(user=self.request.user).order_by('-timestamp')
+        return Activity.objects.all().order_by('-timestamp')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @decorators.action(detail=False, methods=['post'])
+    def clear_all(self, request):
+        Activity.objects.all().delete()
+        return response.Response({'status': 'All activity logs cleared'})

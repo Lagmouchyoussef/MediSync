@@ -16,22 +16,20 @@ class AnalyticsView(APIView):
     def get(self, request):
         user = request.user
         
-        # Summary Stats
+        # Global Summary Stats for Admin/A-Z Management
         patients_count = Patient.objects.all().count()
-        appointments_count = Appointment.objects.filter(doctor=user).count()
-        history_count = Activity.objects.filter(user=user).count()
+        appointments_count = Appointment.objects.all().count()
+        history_count = Activity.objects.all().count()
         
         # Upcoming appointments for today
         today = timezone.now().date()
         upcoming_today = Appointment.objects.filter(
-            doctor=user, 
             date=today,
             status='Pending'
         ).count()
 
         # Revenue/Consultation Data (Monthly)
         monthly_stats = Appointment.objects.filter(
-            doctor=user,
             date__year=today.year
         ).annotate(month=TruncMonth('date')).values('month').annotate(
             count=Count('id')

@@ -12,17 +12,24 @@ class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        user = request.user
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        # Global counts for A to Z management
         patients_count = Patient.objects.all().count()
-        appointments_count = Appointment.objects.filter(doctor=user).count()
-        activities_count = Activity.objects.filter(user=user).count()
+        # Count only today's appointments for "Today's Appointments"
+        appointments_today_count = Appointment.objects.filter(date=today).count()
+        # Global activity and notifications
+        activities_count = Activity.objects.all().count()
+        unread_notifications_count = Notification.objects.filter(read=False).count()
         
         return Response({
             'patients_count': patients_count,
-            'appointments_count': appointments_count,
+            'appointments_count': appointments_today_count,
             'activities_count': activities_count,
+            'unread_notifications_count': unread_notifications_count,
             'recent_appointments': AppointmentSerializer(
-                Appointment.objects.filter(doctor=user).order_by('-date')[:5], 
+                Appointment.objects.all().order_by('-date', '-time')[:5], 
                 many=True
             ).data
         })

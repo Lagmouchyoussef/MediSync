@@ -279,6 +279,10 @@ class ApiService {
     return this._authorizedRequest('/doctor/availabilities/', 'POST', data);
   }
 
+  async setAvailability(data) {
+    return this._authorizedRequest('/doctor/availabilities/set_availability/', 'POST', data);
+  }
+
   async fetchStats() {
     const role = this.getUserRole();
     if (role === 'doctor') return this.fetchAnalytics();
@@ -301,6 +305,10 @@ class ApiService {
     const role = this.getUserRole();
     const prefix = role === 'doctor' ? '/doctor' : '/patient';
     return this._authorizedRequest(`${prefix}/activities/${id}/`, 'DELETE');
+  }
+
+  async clearActivities() {
+    return this._authorizedRequest('/doctor/activities/clear_all/', 'POST');
   }
 
   // --- Notification Routes ---

@@ -10,17 +10,41 @@ class AvailabilityViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Availability.objects.filter(doctor=self.request.user)
+        return Availability.objects.all()
 
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user)
+
+    @decorators.action(detail=False, methods=['post'])
+    def set_availability(self, request):
+        days = request.data.get('days', [])
+        start_time = request.data.get('start_time')
+        end_time = request.data.get('end_time')
+        
+        if not days or not start_time or not end_time:
+            return response.Response({'error': 'Missing data'}, status=400)
+            
+        # Delete existing for this doctor to replace
+        Availability.objects.filter(doctor=request.user).delete()
+        
+        created = []
+        for day in days:
+            obj = Availability.objects.create(
+                doctor=request.user,
+                day_of_week=day,
+                start_time=start_time,
+                end_time=end_time
+            )
+            created.append(obj.id)
+            
+        return response.Response({'status': f'{len(created)} slots created', 'ids': created})
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     serializer_class = AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Appointment.objects.filter(doctor=self.request.user).order_by('date', 'time')
+        return Appointment.objects.all().order_by('date', 'time')
 
     def perform_create(self, serializer):
         appointment = serializer.save(doctor=self.request.user)

@@ -53,14 +53,34 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
     }
   };
 
+  useEffect(() => {
+    const loadAvailability = async () => {
+      try {
+        const data = await apiService.fetchAvailabilities();
+        if (data && data.length > 0) {
+          setAvailableDays(data.map(a => a.day_of_week));
+          setStartTime(data[0].start_time.substring(0, 5));
+          setEndTime(data[0].end_time.substring(0, 5));
+        }
+      } catch (err) {
+        console.error("Error loading availability:", err);
+      }
+    };
+    loadAvailability();
+  }, []);
+
   const handleSaveAvailability = async () => {
     setIsSavingAvailability(true);
     try {
-      // In a real app, you'd send the array of days and times
-      await apiService.createActivity("Updated Availability", `New hours: ${startTime} - ${endTime} for ${availableDays.join(', ')}`);
-      alert("Availability saved successfully!");
+      await apiService.setAvailability({
+        days: availableDays,
+        start_time: startTime,
+        end_time: endTime
+      });
+      await apiService.createActivity("Updated Availability", `New hours: ${startTime} - ${endTime} for ${availableDays.join(', ')}`, "success");
+      alert("Availability saved successfully in database!");
     } catch (err) {
-      alert("Error saving availability");
+      alert("Error saving availability: " + err.message);
     } finally {
       setIsSavingAvailability(false);
     }

@@ -17,6 +17,14 @@ class Patient(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+
+@receiver(post_delete, sender=Patient)
+def delete_related_user(sender, instance, **kwargs):
+    if instance.user:
+        instance.user.delete()
+
 class Availability(models.Model):
     doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='availabilities')
     day_of_week = models.CharField(max_length=20) # e.g. "Monday"
