@@ -149,23 +149,23 @@ export default function DoctorDashboard() {
 
   const navSections = [
     {
-      title: "Overview",
+      title: "Vue d'ensemble",
       items: [
-        { id: "dashboard", label: "Analytics", icon: "dashboard", badge: null },
+        { id: "dashboard", label: "Analytiques", icon: "dashboard", badge: null },
       ]
     },
     {
-      title: "Clinical",
+      title: "Clinique",
       items: [
         { id: "patients", label: "Patients", icon: "patients", badge: Array.isArray(patients) ? patients.length : 0 },
         { 
           id: "appointments", 
-          label: "Availability", 
+          label: "Disponibilité", 
           icon: "appointments", 
           badge: Array.isArray(invitations) ? invitations.length : 0,
           subItems: [
-            { id: "manage", label: "Manage Setup" },
-            { id: "history", label: "Invitation History", badge: Array.isArray(invitations) ? invitations.length : 0 }
+            { id: "manage", label: "Gestion Planning" },
+            { id: "history", label: "Historique Invitations", badge: Array.isArray(invitations) ? invitations.length : 0 }
           ]
         },
       ]
@@ -173,7 +173,7 @@ export default function DoctorDashboard() {
     {
       title: "Administration",
       items: [
-        { id: "history", label: "Activity", icon: "history", badge: Array.isArray(history) ? history.length : 0 },
+        { id: "history", label: "Activité", icon: "history", badge: Array.isArray(history) ? history.length : 0 },
         { id: "settings", label: "Configuration", icon: "settings", badge: null },
       ]
     }

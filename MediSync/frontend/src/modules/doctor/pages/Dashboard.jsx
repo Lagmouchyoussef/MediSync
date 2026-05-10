@@ -67,8 +67,8 @@ export default function Dashboard({
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Doctor Analytics</h1>
-          <p className={`${textSecondary} text-sm font-bold uppercase tracking-widest mt-1`}>Medical System Overview</p>
+          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Analytiques Médicales</h1>
+          <p className={`${textSecondary} text-sm font-bold uppercase tracking-widest mt-1`}>Vue d'ensemble du système</p>
         </div>
         <div className="flex items-center gap-3">
           <div className={`px-4 py-2 rounded-xl border ${dark ? "bg-slate-900/50 border-slate-800 text-slate-400" : "bg-white border-slate-200 text-slate-500"} text-xs font-black uppercase tracking-widest`}>
@@ -82,10 +82,10 @@ export default function Dashboard({
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon="patients" label="Total Patients" value={String(patientsCount)} color="bg-blue-500" delay={0} />
-        <StatCard icon="calendar" label="Today's Appointments" value={String(appointmentCount)} color="bg-emerald-500" delay={0.1} />
-        <StatCard icon="history" label="Activity Records" value={String(historyCount)} color="bg-purple-500" delay={0.2} />
-        <StatCard icon="bell" label="Unread Notifications" value={String(notificationsCount)} color="bg-[#2da0a8]" delay={0.3} />
+        <StatCard icon="patients" label="Nombre total de patients" value={String(patientsCount)} color="bg-blue-500" delay={0} />
+        <StatCard icon="calendar" label="Rendez-vous du jour" value={String(appointmentCount)} color="bg-emerald-500" delay={0.1} />
+        <StatCard icon="history" label="Registres d'activité" value={String(historyCount)} color="bg-purple-500" delay={0.2} />
+        <StatCard icon="bell" label="Notifications non lues" value={String(notificationsCount)} color="bg-[#2da0a8]" delay={0.3} />
       </div>
 
       {/* Analytics Charts */}
@@ -94,12 +94,12 @@ export default function Dashboard({
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className={`${cardClass} lg:col-span-2`}>
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className={`text-xl font-black ${textPrimary}`}>Patient Activity</h3>
-              <p className={`${textSecondary} text-xs font-bold mt-1`}>Weekly patient volume trends</p>
+              <h3 className={`text-xl font-black ${textPrimary}`}>Activité des patients</h3>
+              <p className={`${textSecondary} text-xs font-bold mt-1`}>Tendances hebdomadaires du volume de patients</p>
             </div>
             <select className={`bg-transparent border-none outline-none text-xs font-black uppercase tracking-widest ${textSecondary}`}>
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
+              <option>7 derniers jours</option>
+              <option>30 derniers jours</option>
             </select>
           </div>
           <div className="h-[300px] w-full flex items-center justify-center">
@@ -140,8 +140,8 @@ export default function Dashboard({
         {/* Appointment Distribution */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className={cardClass}>
           <div className="mb-8">
-            <h3 className={`text-xl font-black ${textPrimary}`}>Appointment Types</h3>
-            <p className={`${textSecondary} text-xs font-bold mt-1`}>Distribution of services</p>
+            <h3 className={`text-xl font-black ${textPrimary}`}>Types de rendez-vous</h3>
+            <p className={`${textSecondary} text-xs font-bold mt-1`}>Distribution des services</p>
           </div>
           <div className="h-[220px] w-full flex items-center justify-center">
             {appointmentTypes.length > 0 ? (
@@ -182,8 +182,8 @@ export default function Dashboard({
         {/* Quick Actions */}
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }} className={cardClass}>
           <div className="mb-8">
-            <h3 className={`text-xl font-black ${textPrimary}`}>Quick Actions</h3>
-            <p className={`${textSecondary} text-xs font-bold mt-1`}>Manage clinic tasks efficiently</p>
+            <h3 className={`text-xl font-black ${textPrimary}`}>Actions rapides</h3>
+            <p className={`${textSecondary} text-xs font-bold mt-1`}>Gérez efficacement les tâches de la clinique</p>
           </div>
           <div className="grid grid-cols-3 gap-6">
             <QuickAction icon="plus" label="Invite" color="bg-teal-500" onClick={() => onNavigate("appointments")} />
@@ -199,10 +199,10 @@ export default function Dashboard({
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }} className={`${cardClass} lg:col-span-2`}>
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className={`text-xl font-black ${textPrimary}`}>Upcoming Appointments</h3>
-              <p className={`${textSecondary} text-xs font-bold mt-1`}>Next scheduled consultations</p>
+              <h3 className={`text-xl font-black ${textPrimary}`}>Prochains rendez-vous</h3>
+              <p className={`${textSecondary} text-xs font-bold mt-1`}>Prochaines consultations programmées</p>
             </div>
-            <button onClick={() => onNavigate("appointments")} className={`text-[10px] font-black uppercase tracking-widest text-[#2da0a8] hover:underline`}>View All</button>
+            <button onClick={() => onNavigate("appointments")} className={`text-[10px] font-black uppercase tracking-widest text-[#2da0a8] hover:underline`}>Voir tout</button>
           </div>
 
           <div className="space-y-4">
@@ -242,7 +242,7 @@ export default function Dashboard({
             )) : (
               <div className="py-10 text-center">
                 <Icon name="calendar" className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>No upcoming appointments</p>
+                <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Aucun rendez-vous à venir</p>
               </div>
             )}
           </div>
