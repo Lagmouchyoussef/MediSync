@@ -14,6 +14,15 @@ class ProfileInline(admin.StackedInline):
 
 class CustomUserAdmin(UserAdmin):
     inlines = (ProfileInline,)
+    list_display = UserAdmin.list_display + ('get_role',)
+    list_filter = UserAdmin.list_filter + ('profile__role',)
+
+    def get_role(self, obj):
+        try:
+            return obj.profile.role
+        except Profile.DoesNotExist:
+            return "No Profile"
+    get_role.short_description = 'Role'
 
 
 admin.site.unregister(User)

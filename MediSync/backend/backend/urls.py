@@ -25,3 +25,8 @@ urlpatterns = [
     path('api/patient/', include('patient.urls')),
     path('api/', include('api.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Admin Site Customization
+admin.site.site_header = "MediSync Administration"
+admin.site.site_title = "MediSync Admin Portal"
+admin.site.index_title = "Welcome to the MediSync Management System"
