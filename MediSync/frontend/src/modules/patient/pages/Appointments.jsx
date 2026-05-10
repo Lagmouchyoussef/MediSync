@@ -9,6 +9,7 @@ export default function Appointments({ onAddToHistory }) {
   const [appointments, setAppointments] = useState(appointmentsData);
   const [selectedApt, setSelectedApt] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null });
+  const [formError, setFormError] = useState("");
   
   // Booking Form State
   const [formData, setFormData] = useState({
@@ -39,18 +40,51 @@ export default function Appointments({ onAddToHistory }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.consent) return;
+    setFormError("");
+
+    if (!formData.doctor) {
+      setFormError("Veuillez choisir un médecin.");
+      return;
+    }
+    if (!formData.date) {
+      setFormError("Veuillez sélectionner une date.");
+      return;
+    }
+    if (!formData.timeSlot) {
+      setFormError("Veuillez sélectionner une heure.");
+      return;
+    }
+    if (!formData.email) {
+      setFormError("Veuillez saisir votre adresse email.");
+      return;
+    }
+    if (!formData.phone) {
+      setFormError("Veuillez saisir votre numéro de téléphone.");
+      return;
+    }
+    if (!formData.reason) {
+      setFormError("Veuillez indiquer la raison de votre rendez-vous.");
+      return;
+    }
+    if (!formData.consent) {
+      setFormError("Vous devez accepter le traitement des données pour réserver.");
+      return;
+    }
+
     const newApt = {
       id: Date.now(),
-      doctor: formData.doctor || "Selected Doctor",
+      doctor: formData.doctor,
       specialty: "Medical Review",
       date: formData.date,
       time: formData.timeSlot,
       status: "Pending",
       type: formData.type || "General",
       initiator: "patient",
-      notes: formData.reason
+      notes: formData.reason,
+      email: formData.email,
+      phone: formData.phone,
     };
+
     setAppointments([newApt, ...appointments]);
     onAddToHistory("Appointment Booked", `New appointment request sent to ${newApt.doctor}.`, "appointment");
     setActiveTab("list");
@@ -173,19 +207,19 @@ export default function Appointments({ onAddToHistory }) {
             </div>
           </motion.div>
         ) : (
-          <motion.div key="book" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div className={cardClass}>
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-12 h-12 bg-blue-500/10 text-blue-600 rounded-2xl flex items-center justify-center">
-                  <Icon name="plus" className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className={`text-xl font-black ${textPrimary}`}>Book Your Appointment</h3>
-                  <p className={`${textSecondary} text-xs font-bold`}>Request a new consultation slot</p>
-                </div>
+          <motion.div key="book" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex justify-center">
+            <div className={`${cardClass} max-w-2xl w-full`}>
+              <div className="text-center mb-8">
+                <h3 className={`text-xl font-black ${textPrimary}`}>Book Your Appointment</h3>
+                <p className={`${textSecondary} text-xs font-bold mt-2`}>Request a new consultation slot</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {formError && (
+                  <div className="rounded-2xl p-4 bg-rose-50 text-rose-700 border border-rose-100 text-sm font-bold">
+                    {formError}
+                  </div>
+                )}
                 <div>
                   <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Choose Doctor</label>
                   <select required value={formData.doctor} onChange={(e) => setFormData({...formData, doctor: e.target.value})} className={inputClass}>
@@ -234,7 +268,7 @@ export default function Appointments({ onAddToHistory }) {
 
                 <div className={`p-6 rounded-2xl ${dark ? "bg-slate-800/30 border-slate-700" : "bg-slate-50 border-slate-200"} border`}>
                   <label className="flex items-start gap-4 cursor-pointer group">
-                    <input type="checkbox" className="sr-only peer" checked={formData.consent} onChange={() => setFormData({...formData, consent: !formData.consent})} />
+                    <input type="checkbox" className="sr-only peer" checked={formData.consent} onChange={(e) => setFormData({...formData, consent: e.target.checked})} />
                     <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.consent ? "bg-[#2da0a8] border-[#2da0a8]" : "border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-700"}`}><Icon name="check" className={`w-4 h-4 text-white ${formData.consent ? "opacity-100" : "opacity-0"}`} /></div>
                     <span className={`text-[11px] font-bold leading-relaxed ${formData.consent ? textPrimary : textSecondary}`}>
                       I consent to the processing of my personal data in accordance with the Privacy Notice and agree to receive automated email reminders for this appointment.
@@ -246,45 +280,6 @@ export default function Appointments({ onAddToHistory }) {
                   Book Appointment
                 </button>
               </form>
-            </div>
-
-            {/* Quick Preview Card */}
-            <div className="space-y-8">
-              <div className={`${cardClass} border-dashed`}>
-                <h4 className={`text-xs font-black uppercase tracking-[0.2em] mb-6 ${textSecondary}`}>Your Next Visit Info</h4>
-                {formData.doctor ? (
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-[#2da0a8] rounded-2xl flex items-center justify-center text-white font-black">{formData.doctor.charAt(4)}</div>
-                      <div>
-                        <p className={`text-lg font-black ${textPrimary}`}>{formData.doctor}</p>
-                        <p className="text-xs font-bold text-[#2da0a8]">{formData.type}</p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                        <p className="text-[10px] font-black uppercase text-slate-400">Date</p>
-                        <p className={`text-sm font-bold ${textPrimary}`}>{formData.date || "Not set"}</p>
-                      </div>
-                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-                        <p className="text-[10px] font-black uppercase text-slate-400">Time</p>
-                        <p className={`text-sm font-bold ${textPrimary}`}>{formData.timeSlot || "Not set"}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-10">
-                    <Icon name="calendar" className="w-12 h-12 mx-auto mb-4 text-slate-200 dark:text-slate-800" />
-                    <p className="text-sm font-bold text-slate-400">Complete the form to see preview</p>
-                  </div>
-                )}
-              </div>
-
-              <div className={`p-8 rounded-[2rem] bg-gradient-to-br from-[#2da0a8] to-blue-600 text-white shadow-2xl`}>
-                <h4 className="text-xl font-black mb-4 tracking-tight">Need Urgent Help?</h4>
-                <p className="text-sm font-medium opacity-90 leading-relaxed mb-6">If you are experiencing a medical emergency, please call emergency services immediately or visit the nearest clinic.</p>
-                <button className="w-full py-4 rounded-2xl bg-white text-[#2da0a8] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">Emergency Contacts</button>
-              </div>
             </div>
           </motion.div>
         )}
