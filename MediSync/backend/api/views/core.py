@@ -7,46 +7,6 @@ from ..serializers import (
     AppointmentSerializer, ActivitySerializer
 )
 
-class PatientViewSet(viewsets.ModelViewSet):
-    serializer_class = PatientSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Patient.objects.filter(doctor=self.request.user).order_by('-created_at')
-
-    def perform_create(self, serializer):
-        serializer.save(doctor=self.request.user)
-
-class AvailabilityViewSet(viewsets.ModelViewSet):
-    serializer_class = AvailabilitySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Availability.objects.filter(doctor=self.request.user)
-
-    def perform_create(self, serializer):
-        serializer.save(doctor=self.request.user)
-
-class AppointmentViewSet(viewsets.ModelViewSet):
-    serializer_class = AppointmentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Appointment.objects.filter(doctor=self.request.user).order_by('date', 'time')
-
-    def perform_create(self, serializer):
-        serializer.save(doctor=self.request.user)
-
-class ActivityViewSet(viewsets.ModelViewSet):
-    serializer_class = ActivitySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Activity.objects.filter(user=self.request.user).order_by('-timestamp')
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
 class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

@@ -35,7 +35,8 @@ class LoginView(APIView):
                     'email': user.email,
                     'role': role,
                     'first_name': user.first_name,
-                    'last_name': user.last_name
+                    'last_name': user.last_name,
+                    'image': request.build_absolute_uri(user.profile.image.url) if hasattr(user, 'profile') and user.profile.image else None
                 },
                 'token': token.key
             })
@@ -97,35 +98,10 @@ class CurrentUserView(APIView):
                 'role': role,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'password_last_changed': password_last_changed
+                'password_last_changed': password_last_changed,
+                'image': request.build_absolute_uri(user.profile.image.url) if hasattr(user, 'profile') and user.profile.image else None,
+                'phone': user.profile.phone if hasattr(user, 'profile') else "",
+                'address': user.profile.address if hasattr(user, 'profile') else "",
+                'specialty': user.profile.specialty if hasattr(user, 'profile') else ""
             }
         })
-
-class DeleteAccountView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request):
-        user = request.user
-        user.delete()
-        return Response({'message': 'Account deleted successfully'}, status=status.HTTP_200_OK)
-
-class ChangePasswordView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-        current_password = request.data.get('current_password')
-        new_password = request.data.get('new_password')
-
-        if not user.check_password(current_password):
-            return Response({'error': 'Le mot de passe actuel est incorrect'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user.set_password(new_password)
-        user.save()
-        
-        if hasattr(user, 'profile'):
-            user.profile.password_last_changed = timezone.now()
-            user.profile.save()
-            
-        return Response({'message': 'Mot de passe mis à jour avec succès'})
-

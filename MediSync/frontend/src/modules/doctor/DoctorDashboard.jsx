@@ -5,19 +5,19 @@ import apiService from "../../core/services/api";
 import Logo from "../../shared/components/Logo";
 
 // Shared logic and UI
-import { ThemeContext } from "./DoctorShared";
-import { Icon } from "./DoctorUI";
+import { ThemeContext } from "./components/DoctorShared";
+import { Icon } from "./components/DoctorUI";
 
 // Pages
-import Dashboard from "./Dashboard";
-import Patients from "./Patients";
-import Appointments from "./Appointments";
-import History from "./History";
-import Settings from "./Settings";
+import Dashboard from "./pages/Dashboard";
+import Patients from "./pages/Patients";
+import Appointments from "./pages/Appointments";
+import History from "./pages/History";
+import Settings from "./pages/Settings";
 
 // Header Components
-import NotificationDropdown from "./NotificationDropdown";
-import UserDropdown from "./UserDropdown";
+import NotificationDropdown from "./components/NotificationDropdown";
+import UserDropdown from "./components/UserDropdown";
 
 export default function DoctorDashboard() {
   const navigate = useNavigate();
@@ -75,6 +75,8 @@ export default function DoctorDashboard() {
   // History state
   const [history, setHistory] = useState([]);
 
+  const [profile, setProfile] = useState(null);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notifRef.current && !notifRef.current.contains(event.target)) setNotifOpen(false);
@@ -85,6 +87,12 @@ export default function DoctorDashboard() {
     // Global data fetch
     const fetchData = async () => {
       try {
+        // Fetch Profile
+        const profileData = await apiService.fetchProfile();
+        setProfile(profileData);
+        if (profileData.image) setUserImage(profileData.image);
+        
+        // Fetch Patients
         const patientsData = await apiService.fetchPatients();
         if (Array.isArray(patientsData)) {
           const formattedPatients = patientsData.map(p => ({
@@ -95,11 +103,13 @@ export default function DoctorDashboard() {
           setPatients(formattedPatients);
         }
 
+        // Fetch Appointments
         const appointmentsData = await apiService.fetchAppointments();
         if (Array.isArray(appointmentsData)) {
           setInvitations(appointmentsData);
         }
 
+        // Fetch History
         const activitiesData = await apiService.fetchActivities();
         if (Array.isArray(activitiesData)) {
           setHistory(activitiesData);
@@ -112,6 +122,10 @@ export default function DoctorDashboard() {
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Profile image sync
+  const [userImage, setUserImage] = useState(apiService.getUserImage());
+  const refreshUserImage = () => setUserImage(apiService.getUserImage());
 
   const navSections = [
     {
@@ -145,6 +159,16 @@ export default function DoctorDashboard() {
     }
   ];
 
+  const handleDeleteAppointmentFromDashboard = async (id) => {
+    try {
+      await apiService.deleteAppointment(id);
+      setInvitations(prev => prev.filter(inv => inv.id !== id));
+      await apiService.createActivity("Deleted Appointment", `Appointment ID ${id} was deleted via Dashboard.`, "danger");
+    } catch (err) {
+      alert("Error deleting appointment");
+    }
+  };
+
   const renderPage = () => {
     const pCount = Array.isArray(patients) ? patients.length : 0;
     const iCount = Array.isArray(invitations) ? invitations.length : 0;
@@ -164,12 +188,17 @@ export default function DoctorDashboard() {
           historyCount={hCount}
           notificationsCount={nUnread}
           upcomingAppointments={safeInvs.slice(0, 5).map(i => ({ ...i, patient: i.patient_name || i.patient || "Patient" }))}
+          onDeleteAppointment={handleDeleteAppointmentFromDashboard}
         />
       );
       case "patients": return <Patients patients={Array.isArray(patients) ? patients : []} setPatients={setPatients} />;
       case "appointments": return <Appointments activeTab={appointmentsTab} setActiveTab={setAppointmentsTab} invitations={safeInvs} setInvitations={setInvitations} patients={Array.isArray(patients) ? patients : []} />;
       case "history": return <History setPatients={setPatients} history={Array.isArray(history) ? history : []} setHistory={setHistory} />;
-      case "settings": return <Settings />;
+      case "settings": return <Settings onProfileUpdate={async () => {
+        const updated = await apiService.fetchProfile();
+        setProfile(updated);
+        setUserImage(updated.image);
+      }} />;
       default: return (
         <Dashboard 
           patientsCount={pCount} 
@@ -315,14 +344,22 @@ export default function DoctorDashboard() {
           <div className={`p-5 m-4 mt-2 rounded-2xl border ${darkMode ? "bg-[#0a0c10] border-[#1e293b]" : "bg-white border-slate-100 shadow-sm"}`}>
             <div className="flex items-center gap-3.5">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-[#2da0a8]/20">
-                  {(apiService.getUserDisplayName() || 'A').charAt(0).toUpperCase()}
+                <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl overflow-hidden flex items-center justify-center text-white font-black text-sm shadow-md shadow-[#2da0a8]/20">
+                  {userImage ? (
+                    <img src={userImage} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    (profile?.first_name || apiService.getUserFirstName() || 'A').charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#0a0c10] rounded-full"></div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-base font-bold truncate leading-tight ${darkMode ? "text-white" : "text-slate-800"}`}>{apiService.getUserDisplayName() || 'Doctor'}</p>
-                <p className={`text-[11px] font-medium truncate mt-0.5 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>{apiService.getUserRole()?.toUpperCase() || 'GENERAL PRACTITIONER'}</p>
+                <p className={`text-sm font-black truncate ${headerText}`}>
+                  {profile ? `${profile.first_name} ${profile.last_name}` : apiService.getUserFullName()}
+                </p>
+                <p className={`text-[10px] font-black uppercase tracking-widest truncate ${headerSubText}`}>
+                  {profile?.specialty || apiService.getUserRole()}
+                </p>
               </div>
               <button onClick={handleLogout} className={`p-2.5 rounded-xl transition-all duration-300 ${darkMode ? "bg-slate-800 text-slate-400 hover:bg-red-500/10 hover:text-red-400" : "bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-500"}`} title="Logout">
                 <Icon name="logout" className="w-4 h-4" />
@@ -395,8 +432,12 @@ export default function DoctorDashboard() {
 
               <div ref={userMenuRef} className="relative lg:hidden">
                 <button onClick={() => { setUserMenuOpen(!userMenuOpen); setNotifOpen(false); }} className={`flex items-center gap-2 p-1 rounded-xl transition-all duration-300 ${darkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}>
-                  <div className="w-8 h-8 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-lg flex items-center justify-center text-white font-black text-xs shadow-lg shadow-teal-500/10">
-                    {(apiService.getUserDisplayName() || 'A').charAt(0).toUpperCase()}
+                  <div className="w-8 h-8 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-lg overflow-hidden flex items-center justify-center text-white font-black text-xs shadow-lg shadow-teal-500/10">
+                    {userImage ? (
+                      <img src={userImage} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      (profile?.first_name || apiService.getUserFirstName() || 'A').charAt(0).toUpperCase()
+                    )}
                   </div>
                   <Icon name="chevronRight" className={`w-3 h-3 transition-transform duration-300 ${userMenuOpen ? "rotate-90" : "rotate-0"} ${headerSubText}`} />
                 </button>

@@ -2,15 +2,11 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views.health import HealthCheckView
 from .views.core import (
-    PatientViewSet, AppointmentViewSet, 
-    AvailabilityViewSet, ActivityViewSet, DashboardStatsView
+    DashboardStatsView
 )
 
 router = DefaultRouter()
-router.register(r'patients', PatientViewSet, basename='patient')
-router.register(r'appointments', AppointmentViewSet, basename='appointment')
-router.register(r'availabilities', AvailabilityViewSet, basename='availability')
-router.register(r'activities', ActivityViewSet, basename='activity')
+# Clinical routes moved to doctor app
 
 urlpatterns = [
     path('', include('authentication.urls')),

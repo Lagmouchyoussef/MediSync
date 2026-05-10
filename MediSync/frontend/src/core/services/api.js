@@ -1,9 +1,9 @@
-// API service for communicating with Django backend
-const API_BASE_URL = 'http://localhost:8001/api';
+// API Service - v1.0.3 - Standardized Paths
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.DEV ? 'http://127.0.0.1:8001/api' : '/api');
 
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = API_BASE_URL.replace(/\/$/, '');
   }
 
   async login(email, password) {
@@ -22,7 +22,6 @@ class ApiService {
         throw new Error(data.error || 'Login failed');
       }
 
-      // Store token in localStorage
       if (data.token) {
         localStorage.setItem('authToken', data.token);
         localStorage.setItem('userRole', data.user.role);
@@ -31,6 +30,9 @@ class ApiService {
         localStorage.setItem('userLastName', data.user.last_name || '');
         if (data.user.password_last_changed) {
           localStorage.setItem('passwordLastChanged', data.user.password_last_changed);
+        }
+        if (data.user.image) {
+          localStorage.setItem('userImage', data.user.image);
         }
       }
 
@@ -52,11 +54,7 @@ class ApiService {
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
+      if (!response.ok) throw new Error(data.error || 'Registration failed');
       return data;
     } catch (error) {
       console.error('Registration error:', error);
@@ -66,7 +64,6 @@ class ApiService {
 
   async resetPassword(email) {
     try {
-      // Simulate API call for password reset
       console.log(`Password reset requested for: ${email}`);
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -82,8 +79,7 @@ class ApiService {
   async healthCheck() {
     try {
       const response = await fetch(`${this.baseURL}/health/`);
-      const data = await response.json();
-      return data;
+      return await response.json();
     } catch (error) {
       console.error('Health check error:', error);
       throw error;
@@ -104,9 +100,7 @@ class ApiService {
       });
 
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch current user');
-      }
+      if (!response.ok) throw new Error(data.error || 'Failed to fetch current user');
 
       if (data.user) {
         localStorage.setItem('userRole', data.user.role);
@@ -115,6 +109,11 @@ class ApiService {
         localStorage.setItem('userLastName', data.user.last_name || '');
         if (data.user.password_last_changed) {
           localStorage.setItem('passwordLastChanged', data.user.password_last_changed);
+        }
+        if (data.user.image) {
+          localStorage.setItem('userImage', data.user.image);
+        } else {
+          localStorage.removeItem('userImage');
         }
       }
 
@@ -132,30 +131,19 @@ class ApiService {
     localStorage.removeItem('userFirstName');
     localStorage.removeItem('userLastName');
     localStorage.removeItem('passwordLastChanged');
+    localStorage.removeItem('userImage');
   }
 
-  getAuthToken() {
-    return localStorage.getItem('authToken');
-  }
-
-  getUserRole() {
-    return localStorage.getItem('userRole');
-  }
-
-  getUserEmail() {
-    return localStorage.getItem('userEmail');
-  }
-
-  getUserFirstName() {
-    return localStorage.getItem('userFirstName') || '';
-  }
-
-  getUserLastName() {
-    return localStorage.getItem('userLastName') || '';
-  }
-
-  getPasswordLastChanged() {
-    return localStorage.getItem('passwordLastChanged');
+  getAuthToken() { return localStorage.getItem('authToken'); }
+  getUserRole() { return localStorage.getItem('userRole'); }
+  getUserEmail() { return localStorage.getItem('userEmail'); }
+  getUserFirstName() { return localStorage.getItem('userFirstName') || ''; }
+  getUserLastName() { return localStorage.getItem('userLastName') || ''; }
+  getPasswordLastChanged() { return localStorage.getItem('passwordLastChanged'); }
+  getUserImage() { return localStorage.getItem('userImage'); }
+  setUserImage(url) {
+    if (url) localStorage.setItem('userImage', url);
+    else localStorage.removeItem('userImage');
   }
 
   getUserFullName() {
@@ -171,52 +159,87 @@ class ApiService {
     return email ? email.split('@')[0] : '';
   }
 
-  isAuthenticated() {
-    return !!this.getAuthToken();
+  isAuthenticated() { return !!this.getAuthToken(); }
+
+  // --- Doctor Routes ---
+  async changePassword(current_password, new_password) {
+    return this._authorizedRequest('/doctor/change-password/', 'POST', { current_password, new_password });
   }
 
-  // --- Patients ---
+  async deleteAccount() {
+    return this._authorizedRequest('/doctor/delete-account/', 'DELETE');
+  }
+
+  async fetchProfile() {
+    return this._authorizedRequest('/doctor/profile/');
+  }
+
+  async fetchAnalytics() {
+    return this._authorizedRequest('/doctor/analytics/');
+  }
+
+  async updateProfile(formData) {
+    return this._authorizedRequest('/doctor/profile/', 'PUT', formData);
+  }
+
+  async deleteProfileImage() {
+    return this._authorizedRequest('/doctor/profile/', 'DELETE');
+  }
+
   async fetchPatients() {
-    return this._authorizedRequest('/patients/');
+    return this._authorizedRequest('/doctor/patients/');
   }
 
   async createPatient(patientData) {
-    return this._authorizedRequest('/patients/', 'POST', patientData);
+    return this._authorizedRequest('/doctor/patients/', 'POST', patientData);
   }
 
   async updatePatient(id, patientData) {
-    return this._authorizedRequest(`/patients/${id}/`, 'PUT', patientData);
+    return this._authorizedRequest(`/doctor/patients/${id}/`, 'PUT', patientData);
   }
 
   async deletePatient(id) {
-    return this._authorizedRequest(`/patients/${id}/`, 'DELETE');
+    return this._authorizedRequest(`/doctor/patients/${id}/`, 'DELETE');
   }
 
-  // --- Appointments ---
   async fetchAppointments() {
-    return this._authorizedRequest('/appointments/');
+    return this._authorizedRequest('/doctor/appointments/');
   }
 
   async createAppointment(data) {
-    return this._authorizedRequest('/appointments/', 'POST', data);
+    return this._authorizedRequest('/doctor/appointments/', 'POST', data);
   }
 
-  // --- Stats ---
+  async deleteAppointment(id) {
+    return this._authorizedRequest(`/doctor/appointments/${id}/`, 'DELETE');
+  }
+
+  async fetchAvailabilities() {
+    return this._authorizedRequest('/doctor/availabilities/');
+  }
+
+  async updateAvailability(id, data) {
+    return this._authorizedRequest(`/doctor/availabilities/${id}/`, 'PUT', data);
+  }
+
+  async createAvailability(data) {
+    return this._authorizedRequest('/doctor/availabilities/', 'POST', data);
+  }
+
   async fetchStats() {
     return this._authorizedRequest('/stats/');
   }
 
-  // --- Activities ---
   async fetchActivities() {
-    return this._authorizedRequest('/activities/');
+    return this._authorizedRequest('/doctor/activities/');
   }
 
   async createActivity(action, details = "", type = "info") {
-    return this._authorizedRequest('/activities/', 'POST', { action, details, type });
+    return this._authorizedRequest('/doctor/activities/', 'POST', { action, details, type });
   }
 
   async deleteActivity(id) {
-    return this._authorizedRequest(`/activities/${id}/`, 'DELETE');
+    return this._authorizedRequest(`/doctor/activities/${id}/`, 'DELETE');
   }
 
   // --- Helper for authorized requests ---
@@ -226,19 +249,34 @@ class ApiService {
 
     const headers = {
       'Authorization': `Token ${token}`,
-      'Content-Type': 'application/json',
+      'Accept': 'application/json',
     };
-
     const options = { method, headers };
-    if (body) options.body = JSON.stringify(body);
 
-    const response = await fetch(`${this.baseURL}${endpoint}`, options);
+    if (body) {
+      if (body instanceof FormData) {
+        options.body = body;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+      }
+    }
+
+    const url = `${this.baseURL}${endpoint}`;
+    const response = await fetch(url, options);
     
     if (response.status === 204) return true;
     
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Request failed');
-    return data;
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `Request failed with status ${response.status}`);
+      return data;
+    } else {
+      const text = await response.text();
+      if (!response.ok) throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}...`);
+      return text;
+    }
   }
 }
 
