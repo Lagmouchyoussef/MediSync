@@ -22,6 +22,23 @@ export default function PatientDashboard() {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef(null);
 
+  // History State
+  const [history, setHistory] = useState([
+    { id: 101, action: "Account Created", details: "Your MediSync patient account was successfully registered.", type: "security", timestamp: new Date().toISOString() },
+    { id: 102, action: "Profile Updated", details: "You updated your contact information.", type: "admin", timestamp: new Date().toISOString() }
+  ]);
+
+  const addToHistory = (action, details, type) => {
+    const newEntry = {
+      id: Date.now(),
+      action,
+      details,
+      type: type || "admin",
+      timestamp: new Date().toISOString()
+    };
+    setHistory([newEntry, ...history]);
+  };
+
   // Notifications State
   const [notifications, setNotifications] = useState([
     { id: 1, type: "system", title: "Welcome", message: "Welcome to your new MediSync patient dashboard.", date: new Date().toISOString(), read: false },
@@ -62,7 +79,7 @@ export default function PatientDashboard() {
       title: "Clinical",
       items: [
         { id: "appointments", label: "Appointments", icon: "calendar", badge: 3 },
-        { id: "history", label: "Health History", icon: "history", badge: null },
+        { id: "history", label: "Health History", icon: "history", badge: history.length },
       ]
     },
     {
@@ -82,11 +99,11 @@ export default function PatientDashboard() {
 
   const renderPage = () => {
     switch (activePage) {
-      case "dashboard": return <Dashboard />;
-      case "appointments": return <Appointments />;
-      case "history": return <HealthHistory />;
+      case "dashboard": return <Dashboard onNavigate={setActivePage} />;
+      case "appointments": return <Appointments onAddToHistory={addToHistory} />;
+      case "history": return <HealthHistory history={history} setHistory={setHistory} />;
       case "settings": return <Configuration />;
-      default: return <Dashboard />;
+      default: return <Dashboard onNavigate={setActivePage} />;
     }
   };
 
@@ -132,7 +149,7 @@ export default function PatientDashboard() {
                           <Icon name={item.icon} className="w-6 h-6" />
                         </div>
                         <span className="flex-1 text-left transform group-hover:translate-x-1 transition-transform duration-300">{item.label}</span>
-                        {item.badge && item.badge > 0 && (
+                        {item.badge !== null && item.badge >= 0 && (
                           <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black shadow-sm transition-all duration-300 ${isActive ? "bg-white/20 text-white backdrop-blur-sm" : darkMode ? "bg-slate-800 text-slate-300" : "bg-[#2da0a8]/10 text-[#2da0a8]"}`}>
                             {item.badge}
                           </span>
@@ -173,10 +190,10 @@ export default function PatientDashboard() {
               </button>
               <div className="hidden sm:flex flex-col">
                 <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${darkMode ? "text-slate-500" : "text-slate-400"}`}>
-                  Patient Portal / {activePage === 'dashboard' ? 'Overview' : activePage}
+                  Patient Portal / {activePage === 'dashboard' ? 'Overview' : activePage === 'history' ? 'Clinical' : activePage}
                 </p>
                 <h2 className={`text-xl font-black tracking-tight capitalize ${darkMode ? "text-white" : "text-slate-800"}`}>
-                  {activePage}
+                  {activePage === 'history' ? 'Health History' : activePage}
                 </h2>
               </div>
             </div>

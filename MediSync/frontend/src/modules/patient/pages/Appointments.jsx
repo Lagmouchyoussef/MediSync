@@ -1,40 +1,45 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme, appointmentsData } from "../components/PatientShared";
-import { Icon, Badge } from "../components/PatientUI";
+import { Icon, Badge, Modal } from "../components/PatientUI";
 
-export default function Appointments() {
+export default function Appointments({ onAddToHistory }) {
   const { dark } = useTheme();
   const [activeTab, setActiveTab] = useState("list");
   const [appointments, setAppointments] = useState(appointmentsData);
-  const textPrimary = dark ? "text-white" : "text-slate-800";
-  const textSecondary = dark ? "text-slate-500" : "text-slate-400";
-  const cardBg = dark ? "bg-[#0a0c10] border-slate-800" : "bg-white border-slate-100 shadow-sm";
-
-  // New Booking Form State
+  const [selectedApt, setSelectedApt] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, id: null });
+  
+  // Booking Form State
   const [formData, setFormData] = useState({
-    date: "",
-    doctor: "",
-    timeSlot: "",
-    type: "",
-    reason: "",
-    email: "",
-    phone: "",
-    consent: false
+    date: "", doctor: "", timeSlot: "", type: "Consultation", reason: "", email: "", phone: "", consent: false
   });
 
-  const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM", "04:00 PM"];
+  const textPrimary = dark ? "text-white" : "text-slate-800";
+  const textSecondary = dark ? "text-slate-400" : "text-slate-500";
+  const cardClass = `rounded-[2rem] border p-8 ${dark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-100 shadow-sm"}`;
+  const inputClass = `w-full px-5 py-3.5 border rounded-2xl focus:ring-4 focus:ring-[#2da0a8]/10 focus:border-[#2da0a8] outline-none text-sm font-bold transition-all ${dark ? "bg-slate-800 border-slate-700 text-white placeholder-slate-600" : "bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400"}`;
 
   const handleAction = (id, newStatus) => {
     setAppointments(appointments.map(a => a.id === id ? { ...a, status: newStatus } : a));
   };
 
+  const handleDelete = () => {
+    const apt = appointments.find(a => a.id === deleteConfirm.id);
+    if (apt) {
+      onAddToHistory(
+        "Appointment Deleted", 
+        `Appointment with ${apt.doctor} on ${apt.date} was removed and archived.`, 
+        "appointment"
+      );
+      setAppointments(appointments.filter(a => a.id !== deleteConfirm.id));
+    }
+    setDeleteConfirm({ isOpen: false, id: null });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.consent) {
-      alert("Please consent to the processing of your personal data.");
-      return;
-    }
+    if (!formData.consent) return;
     const newApt = {
       id: Date.now(),
       doctor: formData.doctor || "Selected Doctor",
@@ -47,274 +52,276 @@ export default function Appointments() {
       notes: formData.reason
     };
     setAppointments([newApt, ...appointments]);
+    onAddToHistory("Appointment Booked", `New appointment request sent to ${newApt.doctor}.`, "appointment");
     setActiveTab("list");
-    // Reset form
-    setFormData({ date: "", doctor: "", timeSlot: "", type: "", reason: "", email: "", phone: "", consent: false });
+    setFormData({ date: "", doctor: "", timeSlot: "", type: "Consultation", reason: "", email: "", phone: "", consent: false });
   };
 
-  const inputStyle = `w-full px-5 py-4 rounded-2xl border ${dark ? "bg-slate-900 border-slate-800 text-white placeholder-slate-600" : "bg-slate-50 border-slate-100 text-slate-800 placeholder-slate-400"} focus:border-[#2da0a8] focus:ring-4 focus:ring-[#2da0a8]/10 outline-none font-bold text-sm transition-all shadow-sm`;
-
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div>
-          <h2 className={`text-3xl font-black tracking-tight ${textPrimary}`}>My Appointments</h2>
-          <p className={`${textSecondary} font-bold mt-1 uppercase text-xs tracking-widest`}>Manage your visits and requests</p>
+    <div className="space-y-10 pb-20">
+      {/* Header & Navigation */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h1 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Appointments</h1>
+          <p className={`${textSecondary} text-sm font-bold uppercase tracking-widest`}>Manage your reservations and healthcare requests</p>
         </div>
         
-        <div className={`flex p-1.5 rounded-2xl ${dark ? "bg-slate-900 border-slate-800" : "bg-slate-100 border-slate-200"} border shadow-inner`}>
+        {/* Underline Tabs - Doctor Style */}
+        <div className={`flex gap-8 border-b ${dark ? "border-slate-800" : "border-slate-200"}`}>
           <button 
             onClick={() => setActiveTab("list")}
-            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${activeTab === "list" ? "bg-white dark:bg-[#0a0c10] text-[#2da0a8] shadow-lg scale-105" : textSecondary}`}
+            className={`pb-4 text-sm font-black uppercase tracking-widest transition-all relative ${
+              activeTab === "list" 
+                ? "text-[#2da0a8]" 
+                : `${dark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`
+            }`}
           >
-            Appointments List
+            My Reservations
+            {activeTab === "list" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2da0a8] rounded-t-full shadow-[0_-2px_8px_rgba(45,160,168,0.5)]"></div>
+            )}
           </button>
+          
           <button 
             onClick={() => setActiveTab("book")}
-            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${activeTab === "book" ? "bg-white dark:bg-[#0a0c10] text-[#2da0a8] shadow-lg scale-105" : textSecondary}`}
+            className={`pb-4 text-sm font-black uppercase tracking-widest transition-all relative ${
+              activeTab === "book" 
+                ? "text-[#2da0a8]" 
+                : `${dark ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`
+            }`}
           >
-            Book New Visit
+            Book Appointment
+            {activeTab === "book" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2da0a8] rounded-t-full shadow-[0_-2px_8px_rgba(45,160,168,0.5)]"></div>
+            )}
           </button>
         </div>
       </div>
 
       <AnimatePresence mode="wait">
         {activeTab === "list" ? (
-          <motion.div key="list" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="space-y-8">
-            {/* List Content (Simplified for brevity as it's already implemented) */}
-            <div className="space-y-4">
-              <h3 className={`text-sm font-black uppercase tracking-[0.2em] ${textSecondary} px-2 flex items-center gap-2`}>
-                <span className="w-2 h-2 bg-[#2da0a8] rounded-full"></span> Incoming Requests
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {appointments.filter(a => a.initiator === "doctor").map((apt) => (
-                  <div key={apt.id} className={`${cardBg} border rounded-[2rem] p-8 group transition-all duration-500 hover:border-[#2da0a8] hover:shadow-xl hover:shadow-[#2da0a8]/5`}>
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-lg rotate-3 group-hover:rotate-0 transition-transform">
-                          <Icon name="calendar" className="w-7 h-7" />
-                        </div>
-                        <div>
-                          <p className={`text-lg font-black ${textPrimary}`}>{apt.doctor}</p>
-                          <p className={`text-[10px] font-black uppercase tracking-[0.15em] ${textSecondary}`}>{apt.specialty}</p>
-                        </div>
-                      </div>
-                      <Badge variant={apt.status === "Accepted" ? "success" : apt.status === "Rejected" ? "danger" : "warning"}>{apt.status}</Badge>
-                    </div>
-                    
-                    <div className={`p-5 rounded-2xl ${dark ? "bg-slate-900/50" : "bg-slate-50"} mb-6 border ${dark ? "border-slate-800" : "border-slate-100"}`}>
-                      <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider">
-                        <span className={textSecondary}>Date & Time</span>
-                        <span className={textPrimary}>{apt.date} • {apt.time}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      {apt.status === "Pending" ? (
-                        <>
-                          <button onClick={() => handleAction(apt.id, "Accepted")} className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#2da0a8] to-[#20838a] text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-[#2da0a8]/20 hover:scale-[1.02] transition-all">Accept</button>
-                          <button onClick={() => handleAction(apt.id, "Rejected")} className={`flex-1 py-3.5 rounded-xl ${dark ? "bg-slate-800 text-slate-300" : "bg-slate-200 text-slate-600"} text-xs font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 transition-all`}>Reject</button>
-                        </>
-                      ) : (
-                        <button className={`w-full py-3.5 rounded-xl ${dark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"} text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2`}>
-                          <Icon name="eye" className="w-4 h-4" /> View Visit Details
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+          <motion.div key="list" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+            <div className={cardClass}>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-teal-500/10 text-teal-600 rounded-2xl flex items-center justify-center">
+                  <Icon name="calendar" className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className={`text-xl font-black ${textPrimary}`}>All Appointments</h3>
+                  <p className={`${textSecondary} text-xs font-bold`}>View and manage your consultation history</p>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-4">
-              <h3 className={`text-sm font-black uppercase tracking-[0.2em] ${textSecondary} px-2 flex items-center gap-2`}>
-                <span className="w-2 h-2 bg-emerald-500 rounded-full"></span> My Reservations
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {appointments.filter(a => a.initiator === "patient").map((apt) => (
-                  <div key={apt.id} className={`${cardBg} border rounded-[2rem] p-8 group transition-all duration-500 hover:border-emerald-500 hover:shadow-xl hover:shadow-emerald-500/5`}>
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-lg -rotate-3 group-hover:rotate-0 transition-transform">
-                          <Icon name="calendar" className="w-7 h-7" />
-                        </div>
-                        <div>
-                          <p className={`text-lg font-black ${textPrimary}`}>{apt.doctor}</p>
-                          <p className={`text-[10px] font-black uppercase tracking-[0.15em] ${textSecondary}`}>{apt.specialty}</p>
-                        </div>
-                      </div>
-                      <Badge variant={apt.status === "Accepted" ? "success" : apt.status === "Rejected" ? "danger" : "warning"}>{apt.status}</Badge>
-                    </div>
-                    <div className={`p-5 rounded-2xl ${dark ? "bg-slate-900/50" : "bg-slate-50"} mb-6 border ${dark ? "border-slate-800" : "border-slate-100"}`}>
-                      <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider">
-                        <span className={textSecondary}>Schedule</span>
-                        <span className={textPrimary}>{apt.date} • {apt.time}</span>
-                      </div>
-                    </div>
-                    <button className={`w-full py-3.5 rounded-xl ${dark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"} text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2`}>
-                      <Icon name="eye" className="w-4 h-4" /> Check Status
-                    </button>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className={`border-b ${dark ? "border-slate-800" : "border-slate-100"}`}>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Doctor</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Specialty</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Date & Time</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>Status</th>
+                      <th className={`pb-4 text-[10px] font-black uppercase tracking-widest ${textSecondary} text-right`}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {appointments.map(apt => (
+                      <tr key={apt.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all duration-300">
+                        <td className="py-5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-md">
+                              {apt.doctor.charAt(4)}
+                            </div>
+                            <span className={`text-sm font-bold ${textPrimary}`}>{apt.doctor}</span>
+                          </div>
+                        </td>
+                        <td className="py-5 text-sm font-medium text-slate-500 dark:text-slate-400">{apt.specialty}</td>
+                        <td className="py-5">
+                          <p className={`text-sm font-bold ${textPrimary}`}>{apt.date}</p>
+                          <p className={`text-[10px] font-black uppercase tracking-widest text-[#2da0a8]`}>{apt.time}</p>
+                        </td>
+                        <td className="py-5">
+                          <Badge variant={apt.status === 'Accepted' ? 'success' : apt.status === 'Rejected' ? 'danger' : 'warning'}>
+                            {apt.status}
+                          </Badge>
+                        </td>
+                        <td className="py-5 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-300">
+                            {apt.initiator === "doctor" ? (
+                              <>
+                                <button onClick={() => handleAction(apt.id, "Accepted")} className={`w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="check" className="w-4 h-4" /></button>
+                                <button onClick={() => handleAction(apt.id, "Rejected")} className={`w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="close" className="w-4 h-4" /></button>
+                                {apt.status !== "Pending" && <button onClick={() => handleAction(apt.id, "Pending")} className={`w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="history" className="w-4 h-4" /></button>}
+                              </>
+                            ) : (
+                              <>
+                                {apt.status !== "Cancelled" ? (
+                                  <button onClick={() => handleAction(apt.id, "Cancelled")} className={`w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="close" className="w-4 h-4" /></button>
+                                ) : (
+                                  <button onClick={() => handleAction(apt.id, "Pending")} className={`w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-all`}><Icon name="history" className="w-4 h-4" /></button>
+                                )}
+                              </>
+                            )}
+                            <button onClick={() => setSelectedApt(apt)} className={`w-8 h-8 rounded-lg ${dark ? "bg-slate-800 text-slate-400 hover:bg-blue-500 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-blue-500 hover:text-white"} flex items-center justify-center transition-all`}><Icon name="eye" className="w-4 h-4" /></button>
+                            <button onClick={() => setDeleteConfirm({ isOpen: true, id: apt.id })} className={`w-8 h-8 rounded-lg ${dark ? "bg-rose-500/10 text-rose-400 hover:bg-rose-500 hover:text-white" : "bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white"} flex items-center justify-center transition-all`}><Icon name="trash" className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </motion.div>
         ) : (
-          <motion.div key="book" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="max-w-4xl mx-auto pb-10">
-            <div className={`${cardBg} border rounded-[3rem] p-12 relative overflow-hidden`}>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#2da0a8]/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-              
-              <div className="relative z-10">
-                <div className="flex items-center gap-4 mb-10">
-                  <div className="w-12 h-12 bg-[#2da0a8] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#2da0a8]/20">
-                    <Icon name="plus" className="w-6 h-6" />
-                  </div>
-                  <h3 className={`text-3xl font-black tracking-tight ${textPrimary}`}>Book Your Appointment</h3>
+          <motion.div key="book" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className={cardClass}>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-blue-500/10 text-blue-600 rounded-2xl flex items-center justify-center">
+                  <Icon name="plus" className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className={`text-xl font-black ${textPrimary}`}>Book Your Appointment</h3>
+                  <p className={`${textSecondary} text-xs font-bold`}>Request a new consultation slot</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Choose Doctor</label>
+                  <select required value={formData.doctor} onChange={(e) => setFormData({...formData, doctor: e.target.value})} className={inputClass}>
+                    <option value="">Select a doctor...</option>
+                    <option>Dr. Hassan Amrani</option>
+                    <option>Dr. Leila Berrada</option>
+                    <option>Dr. Rachid Tazi</option>
+                  </select>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-10">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    {/* Left Column */}
-                    <div className="space-y-8">
-                      <div>
-                        <label className={`block text-[11px] font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Selected Date</label>
-                        <input 
-                          type="date" 
-                          required
-                          value={formData.date}
-                          onChange={(e) => setFormData({...formData, date: e.target.value})}
-                          className={inputStyle}
-                        />
-                      </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Select Date</label>
+                    <input type="date" required value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Available Time</label>
+                    <input type="time" required value={formData.timeSlot} onChange={(e) => setFormData({...formData, timeSlot: e.target.value})} className={inputClass} />
+                  </div>
+                </div>
 
-                      <div>
-                        <label className={`block text-[11px] font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Choose Doctor</label>
-                        <select 
-                          required
-                          value={formData.doctor}
-                          onChange={(e) => setFormData({...formData, doctor: e.target.value})}
-                          className={inputStyle}
-                        >
-                          <option value="">Select a doctor</option>
-                          <option>Dr. Hassan Amrani (Cardiologist)</option>
-                          <option>Dr. Leila Berrada (General Practitioner)</option>
-                          <option>Dr. Rachid Tazi (Endocrinologist)</option>
-                        </select>
-                      </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Appointment Type</label>
+                    <select required value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})} className={inputClass}>
+                      <option>Consultation</option>
+                      <option>Follow-up</option>
+                      <option>Routine Checkup</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Contact Phone</label>
+                    <input type="tel" required placeholder="Your phone number" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} className={inputClass} />
+                  </div>
+                </div>
 
-                      <div>
-                        <label className={`block text-[11px] font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Selected Time</label>
-                        <input 
-                          type="time" 
-                          required
-                          value={formData.timeSlot}
-                          onChange={(e) => setFormData({...formData, timeSlot: e.target.value})}
-                          className={inputStyle}
-                        />
-                      </div>
+                <div>
+                  <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Email Address</label>
+                  <input type="email" required placeholder="Enter your email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className={inputClass} />
+                </div>
 
+                <div>
+                  <label className={`block text-xs font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Reason for Visit</label>
+                  <textarea rows={4} required value={formData.reason} onChange={(e) => setFormData({...formData, reason: e.target.value})} placeholder="Please describe your symptoms or reason for the appointment..." className={`${inputClass} resize-none`} />
+                </div>
+
+                <div className={`p-6 rounded-2xl ${dark ? "bg-slate-800/30 border-slate-700" : "bg-slate-50 border-slate-200"} border`}>
+                  <label className="flex items-start gap-4 cursor-pointer group">
+                    <input type="checkbox" className="sr-only peer" checked={formData.consent} onChange={() => setFormData({...formData, consent: !formData.consent})} />
+                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${formData.consent ? "bg-[#2da0a8] border-[#2da0a8]" : "border-slate-300 bg-white dark:bg-slate-800 dark:border-slate-700"}`}><Icon name="check" className={`w-4 h-4 text-white ${formData.consent ? "opacity-100" : "opacity-0"}`} /></div>
+                    <span className={`text-[11px] font-bold leading-relaxed ${formData.consent ? textPrimary : textSecondary}`}>
+                      I consent to the processing of my personal data in accordance with the Privacy Notice and agree to receive automated email reminders for this appointment.
+                    </span>
+                  </label>
+                </div>
+
+                <button type="submit" className="w-full bg-[#2da0a8] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20 active:scale-95">
+                  Book Appointment
+                </button>
+              </form>
+            </div>
+
+            {/* Quick Preview Card */}
+            <div className="space-y-8">
+              <div className={`${cardClass} border-dashed`}>
+                <h4 className={`text-xs font-black uppercase tracking-[0.2em] mb-6 ${textSecondary}`}>Your Next Visit Info</h4>
+                {formData.doctor ? (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#2da0a8] rounded-2xl flex items-center justify-center text-white font-black">{formData.doctor.charAt(4)}</div>
                       <div>
-                        <label className={`block text-[11px] font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Appointment Type</label>
-                        <select 
-                          required
-                          value={formData.type}
-                          onChange={(e) => setFormData({...formData, type: e.target.value})}
-                          className={inputStyle}
-                        >
-                          <option value="">Select type</option>
-                          <option>Consultation</option>
-                          <option>Follow-up</option>
-                          <option>Emergency</option>
-                          <option>Diagnostic Test</option>
-                        </select>
+                        <p className={`text-lg font-black ${textPrimary}`}>{formData.doctor}</p>
+                        <p className="text-xs font-bold text-[#2da0a8]">{formData.type}</p>
                       </div>
                     </div>
-
-                    {/* Right Column */}
-                    <div className="space-y-8">
-                      <div>
-                        <label className={`block text-[11px] font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Reason for Visit</label>
-                        <textarea 
-                          rows={4}
-                          required
-                          value={formData.reason}
-                          onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                          placeholder="Please describe your symptoms or reason for the appointment..."
-                          className={`${inputStyle} resize-none min-h-[120px]`}
-                        ></textarea>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                        <p className="text-[10px] font-black uppercase text-slate-400">Date</p>
+                        <p className={`text-sm font-bold ${textPrimary}`}>{formData.date || "Not set"}</p>
                       </div>
-
-                      <div>
-                        <label className={`block text-[11px] font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Email Address</label>
-                        <input 
-                          type="email" 
-                          required
-                          placeholder="Enter your email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({...formData, email: e.target.value})}
-                          className={inputStyle}
-                        />
-                      </div>
-
-                      <div>
-                        <label className={`block text-[11px] font-black uppercase tracking-[0.2em] mb-3 ${textSecondary}`}>Contact Phone</label>
-                        <input 
-                          type="tel" 
-                          required
-                          placeholder="Your phone number"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                          className={inputStyle}
-                        />
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                        <p className="text-[10px] font-black uppercase text-slate-400">Time</p>
+                        <p className={`text-sm font-bold ${textPrimary}`}>{formData.timeSlot || "Not set"}</p>
                       </div>
                     </div>
                   </div>
-
-                  {/* Consent Checkbox */}
-                  <div className={`p-8 rounded-3xl border ${dark ? "bg-slate-900/50 border-slate-800" : "bg-slate-50 border-slate-100"} mt-10`}>
-                    <label className="flex items-start gap-4 cursor-pointer group">
-                      <div className="relative mt-1">
-                        <input 
-                          type="checkbox" 
-                          className="sr-only peer"
-                          checked={formData.consent}
-                          onChange={() => setFormData({...formData, consent: !formData.consent})}
-                        />
-                        <div className={`w-6 h-6 rounded-lg border-2 transition-all flex items-center justify-center ${
-                          formData.consent 
-                            ? "bg-[#2da0a8] border-[#2da0a8] shadow-lg shadow-[#2da0a8]/20" 
-                            : `${dark ? "border-slate-700 bg-slate-800" : "border-slate-300 bg-white"}`
-                        }`}>
-                          <Icon name="check" className={`w-4 h-4 text-white transition-opacity ${formData.consent ? "opacity-100" : "opacity-0"}`} />
-                        </div>
-                      </div>
-                      <span className={`text-[13px] font-bold leading-relaxed transition-colors ${formData.consent ? textPrimary : textSecondary} group-hover:text-[#2da0a8]`}>
-                        I consent to the processing of my personal data in accordance with the Privacy Notice and agree to receive automated email reminders for this appointment.
-                      </span>
-                    </label>
+                ) : (
+                  <div className="text-center py-10">
+                    <Icon name="calendar" className="w-12 h-12 mx-auto mb-4 text-slate-200 dark:text-slate-800" />
+                    <p className="text-sm font-bold text-slate-400">Complete the form to see preview</p>
                   </div>
+                )}
+              </div>
 
-                  <div className="pt-6 flex gap-6">
-                    <button 
-                      type="button" 
-                      onClick={() => setActiveTab("list")} 
-                      className={`flex-1 py-5 rounded-2xl border ${dark ? "border-slate-800 text-slate-500 hover:bg-slate-800/50" : "border-slate-200 text-slate-400 hover:bg-slate-100"} font-black text-xs uppercase tracking-[0.2em] transition-all`}
-                    >
-                      Cancel Request
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="flex-[2] py-5 rounded-2xl bg-gradient-to-r from-[#2da0a8] to-[#20838a] text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-[#2da0a8]/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                    >
-                      Book Appointment
-                    </button>
-                  </div>
-                </form>
+              <div className={`p-8 rounded-[2rem] bg-gradient-to-br from-[#2da0a8] to-blue-600 text-white shadow-2xl`}>
+                <h4 className="text-xl font-black mb-4 tracking-tight">Need Urgent Help?</h4>
+                <p className="text-sm font-medium opacity-90 leading-relaxed mb-6">If you are experiencing a medical emergency, please call emergency services immediately or visit the nearest clinic.</p>
+                <button className="w-full py-4 rounded-2xl bg-white text-[#2da0a8] font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">Emergency Contacts</button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Appointment Detail Modal */}
+      <Modal isOpen={!!selectedApt} onClose={() => setSelectedApt(null)} title="Appointment Details" size="md">
+        {selectedApt && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-6 p-6 rounded-[2rem] bg-gradient-to-br from-[#2da0a8] to-blue-600 text-white shadow-xl">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20"><Icon name="calendar" className="w-8 h-8" /></div>
+              <div><h4 className="text-xl font-black">{selectedApt.doctor}</h4><p className="text-sm font-bold opacity-90">{selectedApt.specialty}</p></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Date</p><p className="text-sm font-bold">{selectedApt.date}</p></div>
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-700"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Time</p><p className="text-sm font-bold">{selectedApt.time}</p></div>
+            </div>
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-inner"><p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Reason / Notes</p><p className="text-sm leading-relaxed italic">{selectedApt.notes || "No additional notes provided."}</p></div>
+            <button onClick={() => setSelectedApt(null)} className="w-full py-4 rounded-2xl bg-[#2da0a8] text-white font-black text-xs uppercase tracking-widest shadow-lg">Close Details</button>
+          </div>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={deleteConfirm.isOpen} onClose={() => setDeleteConfirm({ isOpen: false, id: null })} title="Archive Appointment" size="sm">
+        <div className="text-center py-4 space-y-6">
+          <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4"><Icon name="trash" className="w-10 h-10" /></div>
+          <div className="space-y-2">
+            <h3 className={`text-lg font-black ${textPrimary}`}>Archive Appointment?</h3>
+            <p className={`text-sm font-medium ${textSecondary} px-4 leading-relaxed`}>This appointment will be moved to your Health History history.</p>
+          </div>
+          <div className="flex gap-3 pt-4 px-2">
+            <button onClick={() => setDeleteConfirm({ isOpen: false, id: null })} className="flex-1 py-3.5 rounded-2xl font-black text-xs uppercase transition-all bg-slate-100 dark:bg-slate-800">Cancel</button>
+            <button onClick={handleDelete} className="flex-1 bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs uppercase shadow-lg shadow-rose-500/20 hover:bg-rose-700">Move to History</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
