@@ -13,6 +13,7 @@ export default function Login() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [resetEmail, setResetEmail] = useState("");
+  const [error, setError] = useState("");
 
   const capitalizeFirst = (str) => {
     if (!str) return str;
@@ -31,10 +32,11 @@ export default function Login() {
     e.preventDefault();
     const data = new FormData(e.target);
     try {
+      setError("");
       const response = await apiService.login(data.get("email"), data.get("password"));
       navigate(`/${response.user.role}/dashboard`);
     } catch (error) {
-      alert(`Error: ${error.message}`);
+      setError(error.message);
     }
   };
 
@@ -49,11 +51,12 @@ export default function Login() {
       role: role
     };
     try {
-      await apiService.register(userData);
-      alert("Registration successful!");
-      setActive(false);
+      setError("");
+      const response = await apiService.register(userData);
+      // Automatically redirect to the correct dashboard after registration
+      navigate(`/${response.user.role}/dashboard`);
     } catch (error) {
-      alert(`Error: ${error.message}`);
+      setError(error.message);
     }
   };
 
@@ -83,6 +86,11 @@ export default function Login() {
           <form onSubmit={handleSignUp} className="bg-white flex flex-col items-center justify-center px-10 h-full">
             <Logo size={120} />
             <h1 className="text-2xl font-bold mt-3 mb-1">Create Account</h1>
+            {error && (
+              <div className="bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-bold px-4 py-2 rounded-lg w-full mb-2 animate-pulse text-center">
+                {error}
+              </div>
+            )}
             <div className="flex gap-2 w-full">
               <input className="input-base" placeholder="First Name" value={firstName} onChange={handleFirstNameChange} name="first_name" required />
               <input className="input-base" placeholder="Last Name" value={lastName} onChange={handleLastNameChange} name="last_name" required />
@@ -140,6 +148,11 @@ export default function Login() {
             <form onSubmit={handleSignIn} className="bg-white flex flex-col items-center justify-center px-10 h-full">
               <Logo size={120} />
               <h1 className="text-2xl font-bold mt-3 mb-1">Login</h1>
+              {error && (
+                <div className="bg-rose-50 border border-rose-100 text-rose-600 text-[11px] font-bold px-4 py-2 rounded-lg w-full mb-2 animate-pulse text-center">
+                  {error}
+                </div>
+              )}
               <input name="email" className="input-base" type="email" placeholder="Email" required />
               <div className="relative w-full mt-2">
                 <input 
@@ -182,14 +195,14 @@ export default function Login() {
             <div className="toggle-panel toggle-left">
               <h1 className="text-white text-3xl font-bold mb-3">Welcome Back!</h1>
               <p className="text-white/90 text-sm leading-relaxed text-center">Login to access your personal space and manage your health.</p>
-              <button onClick={() => {setActive(false); setIsForgot(false);}} className="mt-6 px-10 py-2.5 border-2 border-white text-white font-semibold rounded-lg uppercase text-xs tracking-wide hover:bg-white hover:text-primary transition">
+              <button onClick={() => {setActive(false); setIsForgot(false); setError("");}} className="mt-6 px-10 py-2.5 border-2 border-white text-white font-semibold rounded-lg uppercase text-xs tracking-wide hover:bg-white hover:text-primary transition">
                 Login
               </button>
             </div>
             <div className="toggle-panel toggle-right">
               <h1 className="text-white text-3xl font-bold mb-3">Welcome!</h1>
               <p className="text-white/90 text-sm leading-relaxed text-center">Create an account to access all MediSync services.</p>
-              <button onClick={() => {setActive(true); setIsForgot(false);}} className="mt-6 px-10 py-2.5 border-2 border-white text-white font-semibold rounded-lg uppercase text-xs tracking-wide hover:bg-white hover:text-primary transition">
+              <button onClick={() => {setActive(true); setIsForgot(false); setError("");}} className="mt-6 px-10 py-2.5 border-2 border-white text-white font-semibold rounded-lg uppercase text-xs tracking-wide hover:bg-white hover:text-primary transition">
                 Sign Up
               </button>
             </div>

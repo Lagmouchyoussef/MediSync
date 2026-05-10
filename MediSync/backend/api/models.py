@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Patient(models.Model):
-    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patients')
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_patients_list')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_record', null=True, blank=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
@@ -24,7 +25,8 @@ class Availability(models.Model):
     is_active = models.BooleanField(default=True)
 
 class Appointment(models.Model):
-    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appointments')
+    doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_appointments')
+    patient_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patient_appointments', null=True, blank=True)
     patient_name = models.CharField(max_length=200) # Simple version for now or link to Patient
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments', null=True, blank=True)
     date = models.DateField()

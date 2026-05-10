@@ -13,5 +13,13 @@ class PatientViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Patient.objects.filter(doctor=self.request.user).order_by('-created_at')
 
+    def perform_destroy(self, instance):
+        # If the patient has a linked user account, we can optionally delete it
+        # depending on the business logic. The user said "supprimer son compte".
+        user = instance.user
+        instance.delete()
+        if user:
+            user.delete()
+
     def perform_create(self, serializer):
         serializer.save(doctor=self.request.user)

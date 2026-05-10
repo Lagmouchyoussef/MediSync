@@ -1,9 +1,33 @@
 // API Service - v1.0.3 - Standardized Paths
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8001/api';
+// In development, use the Vite proxy at /api. In production, override with VITE_API_BASE_URL.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL.replace(/\/$/, '');
+  }
+
+  /**
+   * Safely parse JSON response, handling empty or malformed responses
+   */
+  async safeParseResponse(response) {
+    const responseText = await response.text();
+    
+    if (!responseText) {
+      console.error('Empty response from server:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers
+      });
+      throw new Error(`Server error: ${response.status} ${response.statusText} - Empty response body`);
+    }
+
+    try {
+      return JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError, 'Response text:', responseText.substring(0, 200));
+      throw new Error(`Invalid JSON response from server: ${responseText.substring(0, 100)}`);
+    }
   }
 
   async login(email, password) {
@@ -16,23 +40,23 @@ class ApiService {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data = await this.safeParseResponse(response);
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
       }
 
       if (data.token) {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('userRole', data.user.role);
-        localStorage.setItem('userEmail', data.user.email);
-        localStorage.setItem('userFirstName', data.user.first_name || '');
-        localStorage.setItem('userLastName', data.user.last_name || '');
+        sessionStorage.setItem('authToken', data.token);
+        sessionStorage.setItem('userRole', data.user.role);
+        sessionStorage.setItem('userEmail', data.user.email);
+        sessionStorage.setItem('userFirstName', data.user.first_name || '');
+        sessionStorage.setItem('userLastName', data.user.last_name || '');
         if (data.user.password_last_changed) {
-          localStorage.setItem('passwordLastChanged', data.user.password_last_changed);
+          sessionStorage.setItem('passwordLastChanged', data.user.password_last_changed);
         }
         if (data.user.image) {
-          localStorage.setItem('userImage', data.user.image);
+          sessionStorage.setItem('userImage', data.user.image);
         }
       }
 
@@ -53,8 +77,20 @@ class ApiService {
         body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
+      const data = await this.safeParseResponse(response);
       if (!response.ok) throw new Error(data.error || 'Registration failed');
+
+      if (data.token) {
+        sessionStorage.setItem('authToken', data.token);
+        sessionStorage.setItem('userRole', data.user.role);
+        sessionStorage.setItem('userEmail', data.user.email);
+        sessionStorage.setItem('userFirstName', data.user.first_name || '');
+        sessionStorage.setItem('userLastName', data.user.last_name || '');
+        if (data.user.image) {
+          sessionStorage.setItem('userImage', data.user.image);
+        }
+      }
+
       return data;
     } catch (error) {
       console.error('Registration error:', error);
@@ -79,7 +115,7 @@ class ApiService {
   async healthCheck() {
     try {
       const response = await fetch(`${this.baseURL}/health/`);
-      return await response.json();
+      return await this.safeParseResponse(response);
     } catch (error) {
       console.error('Health check error:', error);
       throw error;
@@ -103,17 +139,17 @@ class ApiService {
       if (!response.ok) throw new Error(data.error || 'Failed to fetch current user');
 
       if (data.user) {
-        localStorage.setItem('userRole', data.user.role);
-        localStorage.setItem('userEmail', data.user.email);
-        localStorage.setItem('userFirstName', data.user.first_name || '');
-        localStorage.setItem('userLastName', data.user.last_name || '');
+        sessionStorage.setItem('userRole', data.user.role);
+        sessionStorage.setItem('userEmail', data.user.email);
+        sessionStorage.setItem('userFirstName', data.user.first_name || '');
+        sessionStorage.setItem('userLastName', data.user.last_name || '');
         if (data.user.password_last_changed) {
-          localStorage.setItem('passwordLastChanged', data.user.password_last_changed);
+          sessionStorage.setItem('passwordLastChanged', data.user.password_last_changed);
         }
         if (data.user.image) {
-          localStorage.setItem('userImage', data.user.image);
+          sessionStorage.setItem('userImage', data.user.image);
         } else {
-          localStorage.removeItem('userImage');
+          sessionStorage.removeItem('userImage');
         }
       }
 
@@ -125,25 +161,25 @@ class ApiService {
   }
 
   logout() {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userFirstName');
-    localStorage.removeItem('userLastName');
-    localStorage.removeItem('passwordLastChanged');
-    localStorage.removeItem('userImage');
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('userRole');
+    sessionStorage.removeItem('userEmail');
+    sessionStorage.removeItem('userFirstName');
+    sessionStorage.removeItem('userLastName');
+    sessionStorage.removeItem('passwordLastChanged');
+    sessionStorage.removeItem('userImage');
   }
 
-  getAuthToken() { return localStorage.getItem('authToken'); }
-  getUserRole() { return localStorage.getItem('userRole'); }
-  getUserEmail() { return localStorage.getItem('userEmail'); }
-  getUserFirstName() { return localStorage.getItem('userFirstName') || ''; }
-  getUserLastName() { return localStorage.getItem('userLastName') || ''; }
-  getPasswordLastChanged() { return localStorage.getItem('passwordLastChanged'); }
-  getUserImage() { return localStorage.getItem('userImage'); }
+  getAuthToken() { return sessionStorage.getItem('authToken'); }
+  getUserRole() { return sessionStorage.getItem('userRole'); }
+  getUserEmail() { return sessionStorage.getItem('userEmail'); }
+  getUserFirstName() { return sessionStorage.getItem('userFirstName') || ''; }
+  getUserLastName() { return sessionStorage.getItem('userLastName') || ''; }
+  getPasswordLastChanged() { return sessionStorage.getItem('passwordLastChanged'); }
+  getUserImage() { return sessionStorage.getItem('userImage'); }
   setUserImage(url) {
-    if (url) localStorage.setItem('userImage', url);
-    else localStorage.removeItem('userImage');
+    if (url) sessionStorage.setItem('userImage', url);
+    else sessionStorage.removeItem('userImage');
   }
 
   getUserFullName() {
@@ -161,31 +197,32 @@ class ApiService {
 
   isAuthenticated() { return !!this.getAuthToken(); }
 
-  // --- Doctor Routes ---
+  // --- Profile & Auth Routes ---
   async changePassword(current_password, new_password) {
-    return this._authorizedRequest('/doctor/change-password/', 'POST', { current_password, new_password });
+    return this._authorizedRequest('/change-password/', 'POST', { current_password, new_password });
   }
 
   async deleteAccount() {
-    return this._authorizedRequest('/doctor/delete-account/', 'DELETE');
+    return this._authorizedRequest('/delete-account/', 'DELETE');
   }
 
   async fetchProfile() {
-    return this._authorizedRequest('/doctor/profile/');
+    return this._authorizedRequest('/profile/');
+  }
+
+  async updateProfile(formData) {
+    return this._authorizedRequest('/profile/', 'PUT', formData);
+  }
+
+  async deleteProfileImage() {
+    return this._authorizedRequest('/profile/', 'DELETE');
   }
 
   async fetchAnalytics() {
     return this._authorizedRequest('/doctor/analytics/');
   }
 
-  async updateProfile(formData) {
-    return this._authorizedRequest('/doctor/profile/', 'PUT', formData);
-  }
-
-  async deleteProfileImage() {
-    return this._authorizedRequest('/doctor/profile/', 'DELETE');
-  }
-
+  // --- Doctor Routes ---
   async fetchPatients() {
     return this._authorizedRequest('/doctor/patients/');
   }
@@ -202,16 +239,44 @@ class ApiService {
     return this._authorizedRequest(`/doctor/patients/${id}/`, 'DELETE');
   }
 
-  async fetchAppointments() {
-    return this._authorizedRequest('/doctor/appointments/');
+  async fetchDoctors() {
+    return this._authorizedRequest('/patient/doctors/');
   }
 
-  async createAppointment(data) {
-    return this._authorizedRequest('/doctor/appointments/', 'POST', data);
+  async updateAppointmentStatus(id, status) {
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/appointments/${id}/`, 'PATCH', { status });
   }
 
   async deleteAppointment(id) {
-    return this._authorizedRequest(`/doctor/appointments/${id}/`, 'DELETE');
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/appointments/${id}/`, 'DELETE');
+  }
+
+  async fetchAppointments() {
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/appointments/`);
+  }
+
+  async createAppointment(data) {
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/appointments/`, 'POST', data);
+  }
+
+  async deleteAppointment(id) {
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/appointments/${id}/`, 'DELETE');
+  }
+
+  async updateAppointmentStatus(id, status) {
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/appointments/${id}/`, 'PATCH', { status });
   }
 
   async fetchAvailabilities() {
@@ -227,36 +292,52 @@ class ApiService {
   }
 
   async fetchStats() {
-    return this._authorizedRequest('/stats/');
+    const role = this.getUserRole();
+    if (role === 'doctor') return this.fetchAnalytics();
+    return this._authorizedRequest('/patient/analytics/');
   }
 
   async fetchActivities() {
-    return this._authorizedRequest('/doctor/activities/');
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/activities/`);
   }
 
   async createActivity(action, details = "", type = "info") {
-    return this._authorizedRequest('/doctor/activities/', 'POST', { action, details, type });
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/activities/`, 'POST', { action, details, type });
   }
 
   async deleteActivity(id) {
-    return this._authorizedRequest(`/doctor/activities/${id}/`, 'DELETE');
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/activities/${id}/`, 'DELETE');
   }
 
   // --- Notification Routes ---
   async fetchNotifications() {
-    return this._authorizedRequest('/notifications/');
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/notifications/`);
   }
 
   async markNotificationRead(id) {
-    return this._authorizedRequest(`/notifications/${id}/`, 'PATCH', { read: true });
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/notifications/${id}/`, 'PATCH', { read: true });
   }
 
   async markAllNotificationsRead() {
-    return this._authorizedRequest('/notifications/mark_all_read/', 'POST');
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/notifications/mark_all_read/`, 'POST');
   }
 
   async deleteNotification(id) {
-    return this._authorizedRequest(`/notifications/${id}/`, 'DELETE');
+    const role = this.getUserRole();
+    const prefix = role === 'doctor' ? '/doctor' : '/patient';
+    return this._authorizedRequest(`${prefix}/notifications/${id}/`, 'DELETE');
   }
 
   // --- Helper for authorized requests ---

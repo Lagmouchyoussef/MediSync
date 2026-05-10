@@ -33,10 +33,11 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
 
   const updateStatus = async (id, newStatus) => {
     try {
-      // For now, update local state, but in real app would call API
+      await apiService.updateAppointmentStatus(id, newStatus);
       setInvitations(prev => prev.map(inv => inv.id === id ? { ...inv, status: newStatus } : inv));
+      await apiService.createActivity("Status Updated", `Appointment ${id} status changed to ${newStatus}.`, newStatus === 'Accepted' ? 'success' : 'warning');
     } catch (err) {
-      console.error(err);
+      alert("Error updating status: " + err.message);
     }
   };
 

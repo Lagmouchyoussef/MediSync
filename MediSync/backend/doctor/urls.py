@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     AnalyticsView, PatientViewSet, AvailabilityViewSet, 
-    AppointmentViewSet, ActivityViewSet, ProfileView,
+    AppointmentViewSet, ActivityViewSet, NotificationViewSet, ProfileView,
     DeleteAccountView, ChangePasswordView
 )
 
@@ -12,6 +12,7 @@ router.register(r'patients', PatientViewSet, basename='doctor-patients')
 router.register(r'availabilities', AvailabilityViewSet, basename='doctor-availabilities')
 router.register(r'appointments', AppointmentViewSet, basename='doctor-appointments')
 router.register(r'activities', ActivityViewSet, basename='doctor-activities')
+router.register(r'notifications', NotificationViewSet, basename='doctor-notifications')
 
 urlpatterns = [
     # Dedicated configuration and analytics endpoints

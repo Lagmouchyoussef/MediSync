@@ -22,6 +22,7 @@ export default function Dashboard({
   historyCount = 0, 
   notificationsCount = 0, 
   upcomingAppointments = [],
+  history = [],
   onDeleteAppointment,
   onNavigate
 }) {
@@ -48,9 +49,18 @@ export default function Dashboard({
 
   const COLORS = ['#2da0a8', '#3b82f6', '#8b5cf6', '#f59e0b'];
 
-  // For patient activity, we'll use an empty state if no data
-  // In a real app, this would come from a specific analytics endpoint
-  const patientActivityData = []; 
+  // Process patient activity from history
+  const activityByDay = history.reduce((acc, curr) => {
+    const day = new Date(curr.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
+    acc[day] = (acc[day] || 0) + 1;
+    return acc;
+  }, {});
+
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const patientActivityData = days.map(day => ({
+    name: day,
+    patients: activityByDay[day] || 0
+  }));
 
   return (
     <div className="space-y-8 pb-10">
@@ -178,9 +188,9 @@ export default function Dashboard({
           <div className="grid grid-cols-3 gap-6">
             <QuickAction icon="plus" label="Invite" color="bg-teal-500" onClick={() => onNavigate("appointments")} />
             <QuickAction icon="patients" label="Records" color="bg-blue-500" onClick={() => onNavigate("patients")} />
-            <QuickAction icon="activity" label="Stats" color="bg-purple-500" />
+            <QuickAction icon="user" label="Profile" color="bg-purple-500" onClick={() => onNavigate("settings")} />
             <QuickAction icon="settings" label="Config" color="bg-slate-500" onClick={() => onNavigate("settings")} />
-            <QuickAction icon="bell" label="Alerts" color="bg-orange-500" />
+            <QuickAction icon="bell" label="Alerts" color="bg-orange-500" onClick={() => {}} />
             <QuickAction icon="history" label="Logs" color="bg-indigo-500" onClick={() => onNavigate("history")} />
           </div>
         </motion.div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../../shared/components/Logo";
 
@@ -23,7 +24,15 @@ export default function PatientDashboard() {
   const [activePage, setActivePage] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [profile, setProfile] = useState(null);
   const notifRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!apiService.isAuthenticated() || apiService.getUserRole() !== 'patient') {
+      navigate("/");
+    }
+  }, [navigate]);
 
   // History State
   const [history, setHistory] = useState([]);
@@ -44,6 +53,11 @@ export default function PatientDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    apiService.logout();
+    window.location.href = "/";
+  };
+
   const fetchHistory = async () => {
     try {
       const data = await apiService.fetchActivities();
@@ -52,6 +66,15 @@ export default function PatientDashboard() {
       console.error("Failed to fetch history:", err);
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const data = await apiService.fetchCurrentUser();
+      setProfile(data);
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
     }
   };
 
@@ -95,6 +118,7 @@ export default function PatientDashboard() {
     fetchNotifs();
     fetchHistory();
     fetchApts();
+    fetchProfile();
     // Poll for new notifications every 30 seconds
     const interval = setInterval(() => {
       fetchNotifs();
@@ -255,15 +279,25 @@ export default function PatientDashboard() {
             <div className="flex items-center gap-3.5">
               <div className="relative">
                 <div className="w-10 h-10 bg-gradient-to-br from-[#2da0a8] to-blue-600 rounded-xl overflow-hidden flex items-center justify-center text-white font-black text-sm shadow-md shadow-[#2da0a8]/20">
-                  {patientData.avatar}
+                  {profile?.image ? (
+                    <img src={profile.image} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    (profile?.first_name || apiService.getUserFirstName() || "P").charAt(0)
+                  )}
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white dark:border-[#0a0c10] rounded-full"></div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-black truncate ${headerText}`}>{patientData.name}</p>
+                <p className={`text-sm font-black truncate ${headerText}`}>
+                  {profile ? `${profile.first_name} ${profile.last_name}` : apiService.getUserFullName()}
+                </p>
                 <p className={`text-[10px] font-black uppercase tracking-widest truncate ${headerSubText}`}>Patient</p>
               </div>
-              <button className={`p-2.5 rounded-xl transition-all duration-300 ${darkMode ? "bg-slate-800 text-slate-400 hover:bg-red-500/10 hover:text-red-400" : "bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-500"}`} title="Logout">
+              <button 
+                onClick={handleLogout}
+                className={`p-2.5 rounded-xl transition-all duration-300 ${darkMode ? "bg-slate-800 text-slate-400 hover:bg-red-500/10 hover:text-red-400" : "bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-500"}`} 
+                title="Logout"
+              >
                 <Icon name="logout" className="w-4 h-4" />
               </button>
             </div>

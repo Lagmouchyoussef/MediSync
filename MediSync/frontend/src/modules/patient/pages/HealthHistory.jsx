@@ -59,9 +59,14 @@ export default function HealthHistory({ history, setHistory }) {
     });
   }, [history, searchTerm, filterCategory]);
 
-  const handleDeleteHistory = () => {
-    setHistory(history.filter(h => h.id !== deleteConfirm.id));
-    setDeleteConfirm({ isOpen: false, id: null });
+  const handleDeleteHistory = async () => {
+    try {
+      await apiService.deleteActivity(deleteConfirm.id);
+      setHistory(history.filter(h => h.id !== deleteConfirm.id));
+      setDeleteConfirm({ isOpen: false, id: null });
+    } catch (err) {
+      alert("Error deleting activity record: " + err.message);
+    }
   };
 
   const textPrimary = dark ? "text-white" : "text-slate-800";
@@ -180,9 +185,6 @@ export default function HealthHistory({ history, setHistory }) {
                                   <div className="py-1">
                                     <button onClick={() => { setSelectedItem(item); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${dark ? "text-slate-300 hover:bg-slate-700" : "text-slate-700 hover:bg-slate-50"}`}>
                                       <Icon name="eye" className="w-4 h-4 text-[#2da0a8]" /> View Details
-                                    </button>
-                                    <button onClick={() => { setActiveDropdown(null); alert("Activity restored successfully."); }} className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${dark ? "text-slate-300 hover:bg-slate-700" : "text-slate-700 hover:bg-slate-50"}`}>
-                                      <Icon name="history" className="w-4 h-4 text-emerald-500" /> Restore Activity
                                     </button>
                                     <div className={`h-px my-1 ${dark ? "bg-slate-700" : "bg-slate-100"}`}></div>
                                     <button onClick={() => { setDeleteConfirm({ isOpen: true, id: item.id }); setActiveDropdown(null); }} className={`w-full text-left px-4 py-2.5 text-sm font-medium flex items-center gap-3 transition-colors ${dark ? "text-rose-400 hover:bg-rose-900/30" : "text-rose-600 hover:bg-rose-50"}`}>

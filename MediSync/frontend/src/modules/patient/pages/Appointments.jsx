@@ -13,8 +13,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        // Try to fetch doctors if the endpoint exists, else fallback to empty
-        const data = await apiService._authorizedRequest('/doctors/').catch(() => []);
+        const data = await apiService.fetchDoctors();
         setDoctors(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch doctors:", err);
@@ -42,10 +41,10 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
 
   const handleAction = async (id, newStatus) => {
     try {
-      // In a real app, we would call an API here
+      await apiService.updateAppointmentStatus(id, newStatus);
       setAppointments(appointments.map(a => a.id === id ? { ...a, status: newStatus } : a));
     } catch (err) {
-      console.error(err);
+      alert("Error updating appointment status: " + err.message);
     }
   };
 

@@ -198,6 +198,7 @@ export default function DoctorDashboard() {
           historyCount={hCount}
           notificationsCount={nUnread}
           upcomingAppointments={safeInvs.slice(0, 5).map(i => ({ ...i, patient: i.patient_name || i.patient || "Patient" }))}
+          history={Array.isArray(history) ? history : []}
           onDeleteAppointment={handleDeleteAppointmentFromDashboard}
           onNavigate={setActivePage}
         />

@@ -54,6 +54,7 @@ export default function Configuration() {
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
   const [showPasswords, setShowPasswords] = useState(false);
   const [profileImage, setProfileImage] = useState(apiService.getUserImage() || null);
+  const [profileFile, setProfileFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [sessionInfo, setSessionInfo] = useState({ browser: "Detecting...", location: "Locating..." });
   const [mobileSessionRevoked, setMobileSessionRevoked] = useState(false);
@@ -81,19 +82,19 @@ export default function Configuration() {
     setSessionInfo((prev) => ({ ...prev, browser: getBrowserInfo(), location: "Detecting..." }));
 
 
-    apiService.fetchCurrentUser().then((user) => {
+    apiService.fetchProfile().then((profile) => {
       setSettings((prev) => ({
         ...prev,
-        firstName: capitalizeName(user.first_name || prev.firstName),
-        lastName: capitalizeName(user.last_name || prev.lastName),
-        profileEmail: user.email || prev.profileEmail,
-        profilePhone: user.phone || prev.profilePhone,
-        profileAddress: user.address || prev.profileAddress,
+        firstName: capitalizeName(profile.first_name || prev.firstName),
+        lastName: capitalizeName(profile.last_name || prev.lastName),
+        profileEmail: profile.email || prev.profileEmail,
+        profilePhone: profile.phone || prev.profilePhone,
+        profileAddress: profile.address || prev.profileAddress,
       }));
-      if (user.image) setProfileImage(user.image);
-      if (user.password_last_changed) setPasswordDate(new Date(user.password_last_changed).toLocaleDateString());
-    }).catch(() => {
-      // fallback silently if the API is unavailable
+      if (profile.image) setProfileImage(profile.image);
+      if (profile.password_last_changed) setPasswordDate(new Date(profile.password_last_changed).toLocaleDateString());
+    }).catch((err) => {
+      console.error("Failed to fetch profile:", err);
     });
   }, []);
 
@@ -110,45 +111,76 @@ export default function Configuration() {
   const inputClass = `w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-[#2da0a8] focus:border-transparent outline-none text-sm ${dark ? "bg-[#0a0c10] border-[#1e293b] text-white" : "bg-slate-50 border-slate-200 text-slate-800"}`;
 
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('first_name', settings.firstName);
+      formData.append('last_name', settings.lastName);
+      if (settings.profilePhone) formData.append('phone', settings.profilePhone);
+      if (settings.profileAddress) formData.append('address', settings.profileAddress);
+      if (profileFile) formData.append('image', profileFile);
+      
+      const updatedProfile = await apiService.updateProfile(formData);
+      if (updatedProfile.image) {
+        apiService.setUserImage(updatedProfile.image);
+        setProfileImage(updatedProfile.image);
+        setProfileFile(null);
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      alert("Error saving profile: " + err.message);
+    }
   };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsUploading(true);
+    setProfileFile(file);
     const reader = new FileReader();
     reader.onload = () => {
       setProfileImage(reader.result);
-      apiService.setUserImage(reader.result);
       setIsUploading(false);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleImageDelete = () => {
-    setProfileImage(null);
-    apiService.setUserImage(null);
+  const handleImageDelete = async () => {
+    try {
+      await apiService.deleteProfileImage();
+      setProfileImage(null);
+      setProfileFile(null);
+      apiService.setUserImage(null);
+    } catch (err) {
+      alert("Error deleting image: " + err.message);
+    }
   };
 
-  const handleDeleteAccount = () => {
-    setShowDeleteConfirm(false);
-    // Real implementation would call apiService.deleteAccount()
-    console.log("Account deletion requested.");
+  const handleDeleteAccount = async () => {
+    try {
+      await apiService.deleteAccount();
+      apiService.logout();
+      window.location.href = "/";
+    } catch (err) {
+      alert("Error deleting account: " + err.message);
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwords.new !== passwords.confirm) {
-      alert("Les mots de passe ne correspondent pas");
+      alert("Passwords do not match");
       return;
     }
-    setShowPasswordModal(false);
-    setPasswords({ current: "", new: "", confirm: "" });
-    setPasswordDate(new Date().toLocaleDateString());
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      await apiService.changePassword(passwords.current, passwords.new);
+      setShowPasswordModal(false);
+      setPasswords({ current: "", new: "", confirm: "" });
+      setPasswordDate(new Date().toLocaleDateString());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      alert("Error changing password: " + err.message);
+    }
   };
 
   const handleThemeSelect = (themeValue) => {
