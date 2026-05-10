@@ -1,111 +1,104 @@
-# 🏥 MediSync - Clinical Management System
+# 🏥 MediSync - Système de Gestion Clinique
 
-MediSync is a high-fidelity, enterprise-grade clinical management platform designed to streamline interactions between doctors and patients. Built with a modern tech stack and a premium glassmorphic aesthetic, it provides real-time appointment management, automated transactional notifications, and comprehensive health tracking.
-
----
-
-## 🚀 Overview: From A to Z
-
-### 1. The Patient Portal
-Patients can register, manage their medical profiles, and schedule appointments with doctors. The interface features:
-- **Health Activity Tracking**: Visualized history of medical events.
-- **Appointment Management**: Real-time scheduling with automatic status updates.
-- **Glassmorphic Design**: A modern, clean, and responsive UI.
-
-### 2. The Doctor Dashboard
-Doctors have a powerful "Clinical Command Center" to manage their practice:
-- **Patient Management**: Full view of patient history and records.
-- **Smart Scheduling**: Manage availability and respond to appointment requests.
-- **Analytics**: Data-driven insights into patient volume and activity trends.
-
-### 3. Automated Communication (Brevo API)
-MediSync handles all transactional communications automatically:
-- **Welcome Emails**: Sent upon successful registration.
-- **Appointment Notifications**: Real-time alerts for confirmations or reschedules.
-- **Branding**: All emails are professionally branded with the official MediSync logo.
-
-### 4. Advanced Administration
-The system includes a customized Django Admin (Jazzmin) that serves as a backend management hub for system administrators.
+MediSync est une plateforme de gestion clinique de haute fidélité, conçue pour simplifier les interactions entre médecins et patients. Développée avec une architecture moderne et une esthétique "glassmorphic" premium, elle offre une gestion des rendez-vous en temps réel, des notifications par email automatisées et un suivi complet de la santé.
 
 ---
 
-## 🛠️ Technical Stack
+## 🚀 Présentation : De A à Z
 
-- **Backend**: Python / Django / Django Rest Framework
-- **Frontend**: React / Vite / Tailwind CSS
-- **Database**: SQLite (Development) / PostgreSQL (Production ready)
-- **Email Service**: Brevo (Sendinblue) Transactional API
-- **Design**: Vanilla CSS with Glassmorphism & Modern UI patterns
+### 1. Le Portail Patient
+Les patients peuvent s'inscrire, gérer leur profil médical et prendre rendez-vous. L'interface propose :
+- **Suivi d'Activité Santé** : Historique visuel des événements médicaux.
+- **Gestion des Rendez-vous** : Planification en temps réel avec mise à jour automatique des statuts.
+- **Design Moderne** : Une interface fluide, propre et réactive.
+
+### 2. Le Tableau de Bord Docteur
+Les médecins disposent d'un "Centre de Commandement Clinique" pour gérer leur cabinet :
+- **Gestion des Patients** : Vue complète sur l'historique et les dossiers des patients.
+- **Planification Intelligente** : Gestion des disponibilités et réponse aux demandes.
+- **Analyses (Analytics)** : Insights basés sur les données concernant le volume de patients et les tendances.
+
+### 3. Communication Automatisée (Brevo API)
+MediSync gère toutes les communications de manière professionnelle :
+- **Emails de Bienvenue** : Envoyés automatiquement lors de l'inscription.
+- **Notifications de Rendez-vous** : Alertes en temps réel pour les confirmations ou modifications.
+- **Branding Officiel** : Tous les emails portent le logo officiel MediSync.
 
 ---
 
-## 🏁 How to Launch the Program
+## 🏗️ Architecture du Code (Explication Technique)
 
-Follow these steps to get the full MediSync stack running on your local machine.
+### Backend (Django & DRF)
+- **`backend/api/models.py`** : Cœur de la base de données. Définit comment les patients, les docteurs, les rendez-vous et les notifications sont stockés.
+- **`backend/api/email_service.py`** : Module spécialisé qui utilise l'API Brevo. Il transforme le code Python en emails HTML élégants avec le logo intégré.
+- **`backend/authentication/views.py`** : Gère la logique de sécurité, l'inscription des utilisateurs et la création automatique des profils.
+- **`backend/backend/settings.py`** : Configuration centrale du projet (Base de données, Clés API, Sécurité).
 
-### Prerequisites
-- **Python 3.10+** installed.
-- **Node.js 18+** installed.
+### Frontend (React & Vite)
+- **`frontend/src/core/services/api.js`** : Le pont entre le client et le serveur. Il gère toutes les requêtes vers le backend Django.
+- **`frontend/src/modules/`** : Structure modulaire séparant les interfaces `doctor` et `patient` pour une meilleure maintenance.
+- **`frontend/src/core/App.jsx`** : Le cerveau du routage, décidant quelle page afficher selon le rôle de l'utilisateur.
 
-### Step 1: Backend Setup (Django)
-1. Navigate to the backend directory:
+---
+
+## 🛠️ Stack Technique
+
+- **Backend** : Python / Django / Django Rest Framework
+- **Frontend** : React / Vite / Tailwind CSS
+- **Emails** : Brevo (Sendinblue) Transactional API
+- **Design** : CSS personnalisé avec Glassmorphism & Patterns UI modernes
+
+---
+
+## 🏁 Comment Lancer le Programme Manuellement
+
+Suivez ces étapes pour démarrer MediSync sur votre machine locale.
+
+### Prérequis
+- **Python 3.10+**
+- **Node.js 18+**
+
+### Étape 1 : Configuration du Backend (Django)
+1. Ouvrez un terminal et allez dans le dossier backend :
    ```powershell
    cd "MediSync/backend"
    ```
-2. Install dependencies:
+2. Installez les dépendances :
    ```powershell
    pip install -r requirements.txt
    ```
-3. Run migrations to initialize the database:
+3. Appliquez les migrations (initialisation de la base de données) :
    ```powershell
    python manage.py migrate
    ```
-4. **Launch the Backend Server**:
+4. **Lancer le serveur Backend** :
    ```powershell
    python manage.py runserver 8001
    ```
-   *The backend will be available at: http://localhost:8001*
+   *Le backend sera disponible sur : http://localhost:8001*
 
-### Step 2: Frontend Setup (React)
-1. Open a **new terminal** and navigate to the frontend directory:
+### Étape 2 : Configuration du Frontend (React)
+1. Ouvrez un **nouveau terminal** et allez dans le dossier frontend :
    ```powershell
    cd "MediSync/frontend"
    ```
-2. Install dependencies:
+2. Installez les paquets Node :
    ```powershell
    npm install
    ```
-3. **Launch the Frontend Server**:
+3. **Lancer le serveur Frontend** :
    ```powershell
    npm run dev -- --port 3000
    ```
-   *The frontend will be available at: http://localhost:3000*
+   *Le frontend sera disponible sur : http://localhost:3000*
 
-### Step 3: Accessing the Admin Panel
-To manage the system from the backend:
-1. Go to: **http://localhost:8001/admin/**
-2. **Username**: `admin`
-3. **Password**: `admin123`
-
----
-
-## ⚙️ Environment Configuration
-Create a `.env` file in `MediSync/backend/` with the following variables:
-```env
-BREVO_API_KEY=your_api_key_here
-DEFAULT_FROM_EMAIL=MediSync <medisyncpy@gmail.com>
-DEBUG=True
-```
+### Étape 3 : Accès à l'Administration
+Pour gérer les données directement depuis le backend :
+1. Allez sur : **http://localhost:8001/admin/**
+2. **Utilisateur** : `admin`
+3. **Mot de passe** : `admin123`
 
 ---
 
-## 🛡️ Security & Privacy
-MediSync is built with security best practices:
-- **Token Authentication**: Secure communication between Frontend and Backend.
-- **Data Sanitization**: Protected inputs and validated data structures.
-- **Git Protection**: Sensitive information (API keys, .env) is automatically ignored via `.gitignore`.
-
----
-
-**Developed for Excellence in Healthcare.**
+**Développé pour l'Excellence dans les Soins de Santé.**
 *MediSync Clinical Systems © 2026*
