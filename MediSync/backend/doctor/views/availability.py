@@ -59,6 +59,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             
         # If the doctor creates it, it's like an invitation
         if appointment.patient_user:
+            # Notify via Email
+            from api.email_service import BrevoEmailService
+            brevo = BrevoEmailService()
+            # Use the invitation workflow (Doctor -> Patient)
+            brevo.notify_patient_invitation(appointment.patient_user, self.request.user, appointment)
+
             Notification.objects.create(
                 user=appointment.patient_user,
                 title="New Invitation",
@@ -72,8 +78,21 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         new_status = appointment.status
         
         if old_status != new_status and appointment.patient_user:
-            title = "Appointment Confirmed" if new_status == 'Confirmed' else "Appointment Cancelled"
-            message = f"Your appointment with Dr. {self.request.user.get_full_name()} on {appointment.date} has been {new_status.lower()}."
+            # Notify via Email
+            from api.email_service import BrevoEmailService
+            brevo = BrevoEmailService()
+            brevo.notify_patient_response(appointment.patient_user, self.request.user, appointment)
+
+            status_map = {
+                'Confirmed': 'Confirmed',
+                'Cancelled': 'Cancelled',
+                'Accepted': 'Accepted',
+                'Rejected': 'Rejected'
+            }
+            status_fr = status_map.get(new_status, new_status)
+            
+            title = f"Appointment {status_fr}"
+            message = f"Your appointment with Dr. {self.request.user.get_full_name()} on {appointment.date} was {status_fr.lower()}."
             
             Notification.objects.create(
                 user=appointment.patient_user,
@@ -83,8 +102,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
             
             Activity.objects.create(
-                user=appointment.patient_user or appointment.doctor,
-                action=f"Appointment {new_status}",
+                user=appointment.patient_user,
+                action=title,
                 details=f"Consultation with Dr. {self.request.user.get_full_name()}",
                 type="success" if new_status == 'Confirmed' else "warning"
             )
+

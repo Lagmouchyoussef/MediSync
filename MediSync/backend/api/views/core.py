@@ -6,33 +6,66 @@ from ..models import Patient, Availability, Appointment, Activity, Notification
 from ..serializers import (
     AppointmentSerializer, ActivitySerializer, NotificationSerializer
 )
+from django.shortcuts import render
+from django.utils import timezone
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
+
+def log_error(view_name, e):
+    log_file = "c:/Users/youss/Desktop/Django Project/MediSync/backend/error_log.txt"
+    with open(log_file, "a") as f:
+        f.write(f"\n--- ERROR in {view_name} ---\n")
+        f.write(str(e))
+        f.write("\n")
+        f.write(traceback.format_exc())
+        f.write("\n--------------------------\n")
 
 
 class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        from django.utils import timezone
         today = timezone.now().date()
         
-        # Global counts for A to Z management
         patients_count = Patient.objects.all().count()
-        # Count only today's appointments for "Today's Appointments"
         appointments_today_count = Appointment.objects.filter(date=today).count()
-        # Global activity and notifications
         activities_count = Activity.objects.all().count()
         unread_notifications_count = Notification.objects.filter(read=False).count()
-        
-        return Response({
+        recent_appointments = Appointment.objects.all().order_by('-date', '-time')[:10]
+
+        # Last 7 days data for charts
+        from datetime import timedelta
+        labels = []
+        chart_data_points = []
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            labels.append(day.strftime('%a'))
+            chart_data_points.append(Appointment.objects.filter(date=day).count())
+
+        data = {
             'patients_count': patients_count,
             'appointments_count': appointments_today_count,
             'activities_count': activities_count,
             'unread_notifications_count': unread_notifications_count,
-            'recent_appointments': AppointmentSerializer(
-                Appointment.objects.all().order_by('-date', '-time')[:5], 
-                many=True
-            ).data
-        })
+            'recent_appointments': [
+                {
+                    'patient_name': a.patient_name or "Unknown Patient",
+                    'doctor_name': (a.doctor.get_full_name() if a.doctor else "") or (a.doctor.username if a.doctor else "Unknown Doctor"),
+                    'date': str(a.date),
+                    'time': str(a.time),
+                    'status': a.status
+                } for a in recent_appointments
+            ],
+            'chart_labels': labels,
+            'chart_data': chart_data_points
+        }
+
+        if 'text/html' in request.accepted_renderer.media_type:
+            return render(request, 'admin/dashboard.html', data)
+            
+        return Response(data)
 
 class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -77,7 +110,11 @@ class ActivityViewSet(viewsets.ModelViewSet):
     serializer_class = ActivitySerializer
 
     def get_queryset(self):
-        return Activity.objects.filter(user=self.request.user).order_by('-timestamp')
+        try:
+            return Activity.objects.filter(user=self.request.user).order_by('-timestamp')
+        except Exception as e:
+            log_error("ActivityViewSet", e)
+            raise e
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

@@ -31,11 +31,20 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
             }
         )
 
-        # Notify Doctor
+        # Notify Doctor and Patient
+        from api.email_service import BrevoEmailService
+        brevo = BrevoEmailService()
+        
+        # 1. To Doctor
+        brevo.notify_doctor_new_request(appointment.doctor, self.request.user, appointment)
+        
+        # 2. To Patient (Confirmation)
+        brevo.notify_patient_new_request(self.request.user, appointment.doctor, appointment)
+
         Notification.objects.create(
             user=appointment.doctor,
             title="New Appointment Request",
-            message=f"{self.request.user.get_full_name()} has requested a consultation on {appointment.date}.",
+            message=f"{self.request.user.get_full_name()} has requested a consultation for {appointment.date}.",
             type="appointment"
         )
         
@@ -45,6 +54,7 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
             details=f"Request sent to Dr. {appointment.doctor.get_full_name()}",
             type="info"
         )
+
 
     def update(self, request, *args, **kwargs):
         appointment = self.get_object()
@@ -72,15 +82,20 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
             
             if new_status == 'Cancelled':
                 title = "Appointment Cancelled"
-                msg = f"{request.user.get_full_name()} cancelled the appointment on {appointment.date}."
+                msg = f"{request.user.get_full_name()} cancelled the appointment for {appointment.date}."
             elif new_status == 'Accepted':
                 title = "Invitation Accepted"
-                msg = f"{request.user.get_full_name()} has accepted your invitation for {appointment.date}."
+                msg = f"{request.user.get_full_name()} accepted your invitation for {appointment.date}."
             elif new_status == 'Rejected':
                 title = "Invitation Declined"
-                msg = f"{request.user.get_full_name()} has declined your invitation for {appointment.date}."
+                msg = f"{request.user.get_full_name()} declined your invitation for {appointment.date}."
                 
             if title:
+                # Notify via Email
+                from api.email_service import BrevoEmailService
+                brevo = BrevoEmailService()
+                brevo.notify_doctor_confirmation(appointment.doctor, request.user, appointment, new_status)
+
                 Notification.objects.create(
                     user=appointment.doctor,
                     title=title,
@@ -94,5 +109,6 @@ class PatientAppointmentViewSet(viewsets.ModelViewSet):
                     details=msg,
                     type="info" if new_status == 'Accepted' else "warning"
                 )
+
             
         return res

@@ -100,12 +100,17 @@ class ApiService {
 
   async resetPassword(email) {
     try {
-      console.log(`Password reset requested for: ${email}`);
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ success: true, message: 'Un email de réinitialisation a été envoyé.' });
-        }, 1000);
+      const response = await fetch(`${this.baseURL}/reset-password-request/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
+
+      const data = await this.safeParseResponse(response);
+      if (!response.ok) throw new Error(data.error || 'Reset request failed');
+      return data;
     } catch (error) {
       console.error('Reset password error:', error);
       throw error;
@@ -124,7 +129,7 @@ class ApiService {
 
   async fetchCurrentUser() {
     try {
-      const data = await this._authorizedRequest('/current-user/');
+      const data = await this._authorizedRequest('/user/');
 
       if (data.user) {
         sessionStorage.setItem('userRole', data.user.role);

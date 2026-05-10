@@ -309,7 +309,7 @@ export default function Configuration() {
                 </div>
                 <div>
                   <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Date of Birth</label>
-                  <input type="date" placeholder="jj/mm/aaaa" value={settings.dob} onChange={(e) => setSettings({ ...settings, dob: e.target.value })} className={inputClass} />
+                  <input type="date" placeholder="mm/dd/yyyy" value={settings.dob} onChange={(e) => setSettings({ ...settings, dob: e.target.value })} className={inputClass} />
                 </div>
 
                 <div className="md:col-span-2">

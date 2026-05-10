@@ -25,13 +25,13 @@ export default function NotificationDropdown({ notifications, onMarkRead, onMark
                 <div>
                   <h3 className="text-white font-bold text-lg leading-tight">Notifications</h3>
                   <p className="text-teal-50/70 text-[11px] font-medium">
-                    {unreadCount > 0 ? `${unreadCount} notifications non lues` : "Tout est à jour !"}
+                    {unreadCount > 0 ? `${unreadCount} unread notifications` : "All caught up!"}
                   </p>
                 </div>
               </div>
               {unreadCount > 0 && (
                 <button onClick={onMarkAllRead} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-white text-[10px] font-black uppercase tracking-wider transition-all">
-                  Marquer tout comme lu
+                  Mark all as read
                 </button>
               )}
             </div>
@@ -42,7 +42,7 @@ export default function NotificationDropdown({ notifications, onMarkRead, onMark
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${dark ? "bg-slate-900" : "bg-slate-50"}`}>
                   <Icon name="bell" className={`w-8 h-8 ${dark ? "text-slate-700" : "text-slate-200"}`} />
                 </div>
-                <p className={textSecondary}>Aucune notification</p>
+                <p className={textSecondary}>No notifications</p>
               </div>
             ) : (
               notifications.map((notif) => (
@@ -71,12 +71,12 @@ export default function NotificationDropdown({ notifications, onMarkRead, onMark
                       {!notif.read && (
                         <button onClick={() => onMarkRead(notif.id)} className="text-[11px] text-[#2da0a8] hover:text-[#20838a] font-bold flex items-center gap-1.5 transition-colors uppercase tracking-wider">
                           <Icon name="checkAll" className="w-3.5 h-3.5" />
-                          Marquer comme lu
+                          Mark as read
                         </button>
                       )}
                       <button onClick={() => onDismiss(notif.id)} className={`text-[11px] font-bold flex items-center gap-1.5 transition-colors ml-auto uppercase tracking-wider ${dark ? "text-slate-600 hover:text-rose-400" : "text-slate-400 hover:text-rose-500"}`}>
                         <Icon name="close" className="w-3.5 h-3.5" />
-                        Masquer
+                        Hide
                       </button>
                     </div>
                   </div>
@@ -87,7 +87,7 @@ export default function NotificationDropdown({ notifications, onMarkRead, onMark
           {notifications.length > 0 && (
             <div className={`p-4 border-t text-center ${dark ? "bg-slate-900/50 border-slate-800" : "bg-slate-50/50 border-slate-100"}`}>
               <button className="text-xs text-[#2da0a8] hover:text-[#20838a] font-black uppercase tracking-widest transition-all">
-                Voir toutes les notifications
+                See all notifications
               </button>
             </div>
           )}

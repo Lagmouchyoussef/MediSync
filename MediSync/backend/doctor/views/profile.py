@@ -38,8 +38,13 @@ class DeleteAccountView(APIView):
 
     def delete(self, request):
         user = request.user
-        user.delete()
-        return Response({'message': 'Account deleted successfully'}, status=status.HTTP_200_OK)
+        try:
+            from django.db import transaction
+            with transaction.atomic():
+                user.delete()
+            return Response({'message': 'Account deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ChangePasswordView(APIView):
     permission_classes = [permissions.IsAuthenticated]

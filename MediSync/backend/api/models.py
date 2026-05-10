@@ -20,12 +20,12 @@ class Patient(models.Model):
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
-@receiver(post_delete, sender=Patient)
-def delete_related_user(sender, instance, **kwargs):
-    # Only delete the linked user account if this patient has no other
-    # Patient records (i.e., they are not a patient of any other doctor).
-    if instance.user and not Patient.objects.filter(user=instance.user).exists():
-        instance.user.delete()
+# @receiver(post_delete, sender=Patient)
+# def delete_related_user(sender, instance, **kwargs):
+#     # Only delete the linked user account if this patient has no other
+#     # Patient records (i.e., they are not a patient of any other doctor).
+#     if instance.user and not Patient.objects.filter(user=instance.user).exists():
+#         instance.user.delete()
 
 class Availability(models.Model):
     doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='availabilities')
@@ -33,6 +33,12 @@ class Availability(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.doctor.username} - {self.day_of_week} ({self.start_time})"
+
+    class Meta:
+        verbose_name_plural = "Availabilities"
 
 class Appointment(models.Model):
     doctor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='doctor_appointments')
@@ -47,12 +53,24 @@ class Appointment(models.Model):
     initiator_role = models.CharField(max_length=10, choices=(('doctor', 'doctor'), ('patient', 'patient')), default='patient')
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Appointment: {self.patient_name} with Dr. {self.doctor.username} ({self.date})"
+
+    class Meta:
+        verbose_name_plural = "Appointments"
+
 class Activity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activities')
     action = models.CharField(max_length=255)
     details = models.TextField(blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     type = models.CharField(max_length=50, default='info')
+    
+    def __str__(self):
+        return f"{self.user.username}: {self.action}"
+
+    class Meta:
+        verbose_name_plural = "Activities"
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
@@ -62,6 +80,10 @@ class Notification(models.Model):
     read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Notification for {self.user.username}: {self.title}"
+
     class Meta:
         ordering = ['-created_at']
+        verbose_name_plural = "Notifications"
 

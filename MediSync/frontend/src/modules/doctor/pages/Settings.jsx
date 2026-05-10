@@ -160,7 +160,7 @@ export default function Settings({ onProfileUpdate }) {
         window.location.href = "/";
       } else {
         console.error(err);
-        alert(err.message || "Erreur lors de la suppression du compte");
+        alert(err.message || "Error deleting account");
         setIsDeleting(false);
         setShowDeleteConfirm(false);
       }
@@ -169,7 +169,7 @@ export default function Settings({ onProfileUpdate }) {
 
   const handleChangePassword = async () => {
     if (passwords.new !== passwords.confirm) {
-      alert("Les mots de passe ne correspondent pas");
+      alert("Passwords do not match");
       return;
     }
     setIsChangingPassword(true);
@@ -180,11 +180,11 @@ export default function Settings({ onProfileUpdate }) {
       setShowPasswordModal(false);
       setPasswords({ current: '', new: '', confirm: '' });
       setPasswordDate(new Date().toLocaleDateString());
-      alert("Mot de passe mis à jour avec succès !");
+      alert("Password updated successfully!");
     } catch (err) {
       console.error(err);
       setIsChangingPassword(false);
-      alert(err.message || "Erreur lors du changement de mot de passe");
+      alert(err.message || "Error changing password");
     }
   };
 
@@ -300,7 +300,7 @@ export default function Settings({ onProfileUpdate }) {
                 </div>
 
                 <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Phone</label><input type="tel" placeholder="Enter your phone number" value={settings.profilePhone} onChange={(e) => setSettings({ ...settings, profilePhone: e.target.value })} className={inputClass} /></div>
-                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Date of Birth</label><input type="date" placeholder="jj/mm/aaaa" value={settings.dob} onChange={(e) => setSettings({ ...settings, dob: e.target.value })} className={inputClass} /></div>
+                <div><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Date of Birth</label><input type="date" placeholder="mm/dd/yyyy" value={settings.dob} onChange={(e) => setSettings({ ...settings, dob: e.target.value })} className={inputClass} /></div>
                 
                 <div className="md:col-span-2"><label className={`block text-xs font-black uppercase tracking-widest mb-2 ${dark ? "text-slate-500" : "text-slate-400"}`}>Address</label><input type="text" placeholder="Enter your address" value={settings.profileAddress} onChange={(e) => setSettings({ ...settings, profileAddress: e.target.value })} className={inputClass} /></div>
                 

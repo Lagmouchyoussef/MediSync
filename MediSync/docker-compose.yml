@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: medisync_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=medisync
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=medisync_secure_pwd
+    ports:
+      - "5432:5432"
+    restart: always
+
+volumes:
+  postgres_data:

@@ -29,6 +29,10 @@ import os
 
 @receiver(post_delete, sender=Profile)
 def delete_profile_image(sender, instance, **kwargs):
-    if instance.image:
-        if os.path.isfile(instance.image.path):
-            os.remove(instance.image.path)
+    try:
+        if instance.image:
+            if os.path.isfile(instance.image.path):
+                os.remove(instance.image.path)
+    except Exception as e:
+        # On log l'erreur mais on ne bloque pas la suppression du compte
+        print(f"Error deleting profile image file: {e}")

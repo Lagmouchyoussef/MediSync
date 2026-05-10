@@ -49,9 +49,16 @@ class AppointmentAdmin(admin.ModelAdmin):
 
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
-    list_display = ('user', 'action', 'type', 'timestamp')
-    search_fields = ('user__username', 'action', 'type')
-    list_filter = ('type',)
+    list_display = ('user', 'get_role', 'action', 'type', 'timestamp')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'action', 'details', 'type')
+    list_filter = ('user__profile__role', 'type', 'timestamp')
+    ordering = ('-timestamp',)
+
+    @admin.display(description='Rôle', ordering='user__profile__role')
+    def get_role(self, obj):
+        if hasattr(obj.user, 'profile'):
+            return obj.user.profile.role.capitalize()
+        return "N/A"
 
 
 @admin.register(Notification)

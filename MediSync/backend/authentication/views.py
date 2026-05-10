@@ -7,10 +7,26 @@ from rest_framework.authtoken.models import Token
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.shortcuts import render
 from .models import Profile
-from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .serializers import ProfileSerializer
 from api.models import Patient
+from api.email_service import BrevoEmailService
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+import logging
+import traceback
+import os
+
+logger = logging.getLogger(__name__)
+
+def log_error(view_name, e):
+    log_file = "c:/Users/youss/Desktop/Django Project/MediSync/backend/error_log.txt"
+    with open(log_file, "a") as f:
+        f.write(f"\n--- ERROR in {view_name} ---\n")
+        f.write(str(e))
+        f.write("\n")
+        f.write(traceback.format_exc())
+        f.write("\n--------------------------\n")
 
 class LoginView(APIView):
     authentication_classes = []
@@ -45,8 +61,7 @@ class LoginView(APIView):
                         if user.profile.image:
                             image_url = request.build_absolute_uri(user.profile.image.url)
                     except Exception as e:
-                        # Log the error but don't fail the login
-                        print(f"Error getting profile image: {e}")
+                        logger.error(f"Error getting profile image: {e}")
                         image_url = None
                     
                 return Response({
@@ -67,7 +82,7 @@ class LoginView(APIView):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
         except Exception as e:
-            print(f"Login error: {e}")
+            logger.error(f"Login error: {e}")
             return Response(
                 {'error': 'An unexpected error occurred during login'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -84,13 +99,15 @@ class RegisterView(APIView):
             first_name = request.data.get('first_name', '')
             last_name = request.data.get('last_name', '')
             role = request.data.get('role', 'patient')
-            # Optional: doctor_id the patient wants to register with
             doctor_id = request.data.get('doctor_id')
 
-            if User.objects.filter(email=email).exists():
-                return Response({'error': 'This account is already created.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not email or not password:
+                return Response({'error': 'Email and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create User, Profile, and (if patient) Patient records atomically
+            # Vérification email ET username (car username=email)
+            if User.objects.filter(email=email).exists() or User.objects.filter(username=email).exists():
+                return Response({'error': 'An account with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
             with transaction.atomic():
                 user = User.objects.create_user(
                     username=email,
@@ -100,41 +117,36 @@ class RegisterView(APIView):
                     last_name=last_name
                 )
 
-                # Create Profile with role
                 Profile.objects.create(user=user, role=role)
 
-                # If the new user is a patient, create a Patient record
-                # so they appear in doctor dashboards immediately.
                 if role == 'patient':
+                    # Associer aux docteurs
                     if doctor_id:
-                        # Link to the specific chosen doctor
-                        try:
-                            doctor_user = User.objects.get(pk=doctor_id, profile__role='doctor')
-                            Patient.objects.create(
-                                doctor=doctor_user,
-                                user=user,
-                                first_name=first_name,
-                                last_name=last_name,
-                                email=email,
-                                status='Active',
-                            )
-                        except User.DoesNotExist:
-                            pass  # Invalid doctor_id, skip silently
+                        doctors = User.objects.filter(pk=doctor_id, profile__role='doctor')
+                        if not doctors.exists():
+                            doctors = User.objects.filter(profile__role='doctor')
                     else:
-                        # No doctor specified → create for ALL existing doctors
-                        # This ensures the patient is visible to everyone.
                         doctors = User.objects.filter(profile__role='doctor')
-                        for doctor_user in doctors:
-                            # Avoid duplicate if already exists (safety guard)
-                            if not Patient.objects.filter(user=user, doctor=doctor_user).exists():
-                                Patient.objects.create(
-                                    doctor=doctor_user,
-                                    user=user,
-                                    first_name=first_name,
-                                    last_name=last_name,
-                                    email=email,
-                                    status='Active',
-                                )
+
+                    for doc in doctors:
+                        Patient.objects.get_or_create(
+                            user=user,
+                            doctor=doc,
+                            defaults={
+                                'first_name': first_name,
+                                'last_name': last_name,
+                                'email': email,
+                                'status': 'Active'
+                            }
+                        )
+
+
+            # Welcome notification via email
+            try:
+                email_service = BrevoEmailService()
+                email_service.notify_welcome_user(user)
+            except Exception as e:
+                logger.error(f"Failed to send welcome email to {user.email}: {e}")
 
             token, _ = Token.objects.get_or_create(user=user)
 
@@ -148,10 +160,12 @@ class RegisterView(APIView):
                 },
                 'token': token.key
             }, status=status.HTTP_201_CREATED)
+
         except Exception as e:
-            print(f"Registration error: {e}")
+            logger.error(f"--- REGISTRATION ERROR ---")
+            traceback.print_exc()
             return Response(
-                {'error': 'An unexpected error occurred during registration'},
+                {'error': f'Internal Server Error: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -161,27 +175,22 @@ class CurrentUserView(APIView):
     def get(self, request):
         try:
             user = request.user
-            role = 'patient'
-            password_last_changed = None
+            # Ensure profile exists to avoid crashes
+            profile, created = Profile.objects.get_or_create(user=user)
+            
+            role = profile.role
+            password_last_changed = profile.password_last_changed
+            phone = profile.phone or ""
+            address = profile.address or ""
+            specialty = profile.specialty or ""
             image_url = None
-            phone = ""
-            address = ""
-            specialty = ""
             
-            if hasattr(user, 'profile'):
-                role = user.profile.role
-                password_last_changed = user.profile.password_last_changed
-                phone = user.profile.phone or ""
-                address = user.profile.address or ""
-                specialty = user.profile.specialty or ""
-                # Safely get image URL
-                try:
-                    if user.profile.image:
-                        image_url = request.build_absolute_uri(user.profile.image.url)
-                except Exception as e:
-                    print(f"Error getting profile image: {e}")
-                    image_url = None
-            
+            try:
+                if profile.image:
+                    image_url = request.build_absolute_uri(profile.image.url)
+            except Exception as e:
+                print(f"Error getting profile image: {e}")
+
             return Response({
                 'user': {
                     'email': user.email,
@@ -196,7 +205,9 @@ class CurrentUserView(APIView):
                 }
             })
         except Exception as e:
-            print(f"CurrentUser error: {e}")
+            log_error("CurrentUserView", e)
+            import traceback
+            traceback.print_exc()
             return Response(
                 {'error': 'An error occurred fetching user data'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -232,8 +243,18 @@ class DeleteAccountView(APIView):
 
     def delete(self, request):
         user = request.user
-        user.delete()
-        return Response({'message': 'Account deleted successfully'}, status=status.HTTP_200_OK)
+        try:
+            with transaction.atomic():
+                # Ensure proper logging before deletion
+                logger.info(f"Attempting to delete account: {user.email}")
+                user.delete()
+                logger.info("Account deleted successfully.")
+            return Response({'message': 'Account deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            import traceback
+            logger.error(f"ACCOUNT DELETION ERROR: {str(e)}")
+            traceback.print_exc()
+            return Response({'error': f"Server error during deletion: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -254,3 +275,4 @@ class ChangePasswordView(APIView):
             user.profile.save()
             
         return Response({'message': 'Password updated successfully'})
+

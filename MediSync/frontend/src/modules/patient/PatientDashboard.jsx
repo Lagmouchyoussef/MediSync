@@ -206,7 +206,7 @@ export default function PatientDashboard() {
   const renderPage = () => {
     switch (activePage) {
       case "dashboard": return <Dashboard onNavigate={setActivePage} appointments={appointments} notifications={notifications} historyCount={history.length} />;
-      case "appointments": return <Appointments onAddToHistory={refreshHistory} appointments={appointments} setAppointments={setAppointments} />;
+      case "appointments": return <Appointments onAddToHistory={refreshHistory} appointments={appointments} setAppointments={setAppointments} onRefresh={fetchApts} />;
       case "history": return <HealthHistory history={history} setHistory={setHistory} />;
       case "settings": return <Configuration />;
       default: return <Dashboard onNavigate={setActivePage} appointments={appointments} notifications={notifications} historyCount={history.length} />;

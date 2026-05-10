@@ -4,7 +4,7 @@ import { useTheme } from "../components/PatientShared";
 import { Icon, Badge, Modal } from "../components/PatientUI";
 import apiService from "../../../core/services/api";
 
-export default function Appointments({ onAddToHistory, appointments = [], setAppointments }) {
+export default function Appointments({ onAddToHistory, appointments = [], setAppointments, onRefresh }) {
   const { dark } = useTheme();
   const [activeTab, setActiveTab] = useState("list");
   const [doctors, setDoctors] = useState([]);
@@ -53,11 +53,12 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
     if (apt) {
       try {
         await apiService.deleteAppointment(apt.id);
-        onAddToHistory(
+        await apiService.createActivity(
           "Appointment Deleted", 
           `Appointment with ${apt.doctor_name} on ${apt.date} was removed and archived.`, 
-          "appointment"
+          "danger"
         );
+        if (onAddToHistory) onAddToHistory();
         setAppointments(appointments.filter(a => a.id !== deleteConfirm.id));
       } catch (err) {
         console.error("Failed to delete appointment:", err);
@@ -110,10 +111,12 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
         phone: formData.phone,
       };
 
-      const response = await apiService._authorizedRequest('/appointments/', 'POST', newAptData).catch(() => ({ ...newAptData, id: Date.now(), status: "Pending" }));
+      const response = await apiService.createAppointment(newAptData);
       
+      if (onRefresh) onRefresh();
       setAppointments([response, ...appointments]);
-      onAddToHistory("Appointment Booked", `New appointment request sent to ${formData.doctor}.`, "appointment");
+      const selectedDoctor = doctors.find(d => String(d.id) === String(formData.doctor));
+      onAddToHistory("Appointment Booked", `New appointment request sent to Dr. ${selectedDoctor?.name || 'Medical Specialist'}.`, "appointment");
       setActiveTab("list");
       setFormData({ date: "", doctor: "", timeSlot: "", type: "Consultation", reason: "", email: apiService.getUserEmail() || "", phone: "", consent: false });
     } catch (err) {
@@ -288,7 +291,7 @@ export default function Appointments({ onAddToHistory, appointments = [], setApp
                   <select required value={formData.doctor} onChange={(e) => setFormData({...formData, doctor: e.target.value})} className={inputClass}>
                     <option value="">Select a doctor...</option>
                     {doctors.length > 0 ? doctors.map(doc => (
-                      <option key={doc.id} value={doc.name || doc.full_name}>{doc.name || doc.full_name} ({doc.specialty})</option>
+                      <option key={doc.id} value={doc.id}>{doc.name || doc.full_name || "Doctor"} ({doc.specialty})</option>
                     )) : (
                       <>
                         <option value="General Practitioner">General Practitioner</option>

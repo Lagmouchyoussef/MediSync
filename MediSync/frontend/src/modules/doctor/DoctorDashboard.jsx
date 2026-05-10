@@ -52,7 +52,7 @@ export default function DoctorDashboard() {
       
       const notif = notifications.find((n) => n.id === id);
       if (notif) {
-        await apiService.createActivity("Notification Supprimée", `La notification "${notif.title}" a été supprimée définitivement.`, "notification");
+        await apiService.createActivity("Notification Deleted", `The notification "${notif.title}" was permanently deleted.`, "notification");
         const updatedHistory = await apiService.fetchActivities();
         setHistory(updatedHistory);
       }
@@ -426,7 +426,7 @@ export default function DoctorDashboard() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder="Rechercher un patient..." 
+                  placeholder="Search for a patient..." 
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       setActivePage('patients');

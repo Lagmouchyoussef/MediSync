@@ -79,7 +79,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
         end_time: endTime
       });
       await apiService.createActivity("Updated Availability", `New hours: ${startTime} - ${endTime} for ${availableDays.join(', ')}`, "success");
-      setSuccessModal({ isOpen: true, message: "Planning de disponibilité enregistré avec succès dans la base de données !" });
+      setSuccessModal({ isOpen: true, message: "Availability schedule successfully saved to the database!" });
     } catch (err) {
       alert("Error saving availability: " + err.message);
     } finally {
@@ -90,12 +90,14 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
   const handleSendInvitation = async (e) => {
     e.preventDefault();
     if (!invitationForm.patientId) return alert("Please select a patient");
+    if (!invitationForm.date) return alert("Please select a date");
+    if (!invitationForm.time) return alert("Please select a time");
     
     setIsSendingInvitation(true);
     try {
       const selectedPatient = patients.find(p => String(p.id) === String(invitationForm.patientId));
       const res = await apiService.createAppointment({
-        patient_name: selectedPatient ? selectedPatient.name : "Unknown",
+        patient_name: selectedPatient ? (selectedPatient.name || `${selectedPatient.first_name} ${selectedPatient.last_name}`) : "Unknown",
         patient: invitationForm.patientId,
         date: invitationForm.date,
         time: invitationForm.time,
@@ -107,7 +109,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
       await apiService.createActivity("Sent Invitation", `Invitation sent to ${selectedPatient.name} for ${invitationForm.date}.`);
       setShowPreview(false);
       setInvitationForm({ ...invitationForm, patientId: "", time: "", notes: "" });
-      setSuccessModal({ isOpen: true, message: "Invitation envoyée avec succès !" });
+      setSuccessModal({ isOpen: true, message: "Invitation sent successfully!" });
     } catch (err) {
       alert(err.message || "Error sending invitation");
     } finally {
@@ -396,85 +398,97 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {invitations.map(inv => (
-                  <tr key={inv.id} className="group">
-                    <td className="py-4 pr-4">
-                      {inv.initiator_role === "doctor" ? (
-                        <div className="flex items-center gap-2 text-blue-500 bg-blue-500/10 w-max px-3 py-1.5 rounded-lg">
-                          <Icon name="send" className="w-3.5 h-3.5" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Sent</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 w-max px-3 py-1.5 rounded-lg">
-                          <Icon name="download" className="w-3.5 h-3.5" />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Received</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-4 pr-4">
-                      <p className={`text-sm font-bold ${textPrimary}`}>{inv.patient_name || inv.patient}</p>
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>
-                        {inv.patient ? `PAT-${inv.patient}` : "EXTERNAL"}
-                      </p>
-                    </td>
-                    <td className="py-4 pr-4">
-                      <p className={`text-sm font-bold ${textPrimary}`}>{inv.date}</p>
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>{inv.time}</p>
-                    </td>
-                    <td className="py-4 pr-4">
-                      <Badge variant="purple">{inv.type}</Badge>
-                    </td>
-                    <td className="py-4 pr-4">
-                      <Badge variant={
-                        inv.status === 'Confirmed' || inv.status === 'Accepted' ? 'success' : 
-                        inv.status === 'Cancelled' || inv.status === 'Rejected' || inv.status === 'Declined' ? 'danger' : 
-                        'warning'
-                      }>
-                        {inv.status}
-                      </Badge>
-                    </td>
-                    <td className="py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {inv.initiator_role === "patient" && (
-                          <div className="flex items-center gap-1.5 mr-2">
-                            {inv.status === 'Pending' && (
-                              <>
-                                <button 
-                                  onClick={() => updateStatus(inv.id, 'Confirmed')} 
-                                  title="Confirm Appointment" 
-                                  className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-colors"
-                                >
-                                  <Icon name="check" className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => updateStatus(inv.id, 'Cancelled')} 
-                                  title="Decline Appointment" 
-                                  className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors"
-                                >
-                                  <Icon name="close" className="w-4 h-4" />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                        <button 
-                          onClick={() => setSelectedInvitation(inv)}
-                          title="View Details"
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${dark ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800"}`}
-                        >
-                          <Icon name="eye" className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => setDeleteConfirm({ isOpen: true, id: inv.id })}
-                          title="Delete Invitation"
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${dark ? "bg-rose-500/10 text-rose-400 hover:bg-rose-600 hover:text-white" : "bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white"}`}
-                        >
-                          <Icon name="trash" className="w-4 h-4" />
-                        </button>
+                {invitations.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-20 text-center">
+                      <div className="flex flex-col items-center gap-4 opacity-40">
+                        <Icon name="history" className="w-16 h-16" />
+                        <p className="text-sm font-black uppercase tracking-widest">No appointments found for your account</p>
+                        <p className="text-[10px] font-bold">Try sending an invitation to a patient.</p>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  invitations.map(inv => (
+                    <tr key={inv.id} className="group">
+                      <td className="py-4 pr-4">
+                        {inv.initiator_role === "doctor" ? (
+                          <div className="flex items-center gap-2 text-blue-500 bg-blue-500/10 w-max px-3 py-1.5 rounded-lg">
+                            <Icon name="send" className="w-3.5 h-3.5" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Sent</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 w-max px-3 py-1.5 rounded-lg">
+                            <Icon name="download" className="w-3.5 h-3.5" />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Received</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-4 pr-4">
+                        <p className={`text-sm font-bold ${textPrimary}`}>{inv.patient_name || inv.patient}</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>
+                          {inv.patient ? `PAT-${inv.patient}` : "EXTERNAL"}
+                        </p>
+                      </td>
+                      <td className="py-4 pr-4">
+                        <p className={`text-sm font-bold ${textPrimary}`}>{inv.date}</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>{inv.time}</p>
+                      </td>
+                      <td className="py-4 pr-4">
+                        <Badge variant="purple">{inv.type}</Badge>
+                      </td>
+                      <td className="py-4 pr-4">
+                        <Badge variant={
+                          inv.status === 'Confirmed' || inv.status === 'Accepted' ? 'success' : 
+                          inv.status === 'Cancelled' || inv.status === 'Rejected' || inv.status === 'Declined' ? 'danger' : 
+                          'warning'
+                        }>
+                          {inv.status}
+                        </Badge>
+                      </td>
+                      <td className="py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {inv.initiator_role === "patient" && (
+                            <div className="flex items-center gap-1.5 mr-2">
+                              {inv.status === 'Pending' && (
+                                <>
+                                  <button 
+                                    onClick={() => updateStatus(inv.id, 'Confirmed')} 
+                                    title="Confirm Appointment" 
+                                    className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white flex items-center justify-center transition-colors"
+                                  >
+                                    <Icon name="check" className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => updateStatus(inv.id, 'Cancelled')} 
+                                    title="Decline Appointment" 
+                                    className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors"
+                                  >
+                                    <Icon name="close" className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          <button 
+                            onClick={() => setSelectedInvitation(inv)}
+                            title="View Details"
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${dark ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800"}`}
+                          >
+                            <Icon name="eye" className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => setDeleteConfirm({ isOpen: true, id: inv.id })}
+                            title="Delete Invitation"
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${dark ? "bg-rose-500/10 text-rose-400 hover:bg-rose-600 hover:text-white" : "bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white"}`}
+                          >
+                            <Icon name="trash" className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -554,14 +568,14 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
               <div className="flex justify-between items-start mb-6 border-b pb-6 border-slate-200 dark:border-slate-700">
                 <div>
                   <h4 className={`text-lg font-black ${textPrimary}`}>
-                    {selectedInvitation.direction === "sent" ? "Sent Invitation" : "Received Request"}
+                    {selectedInvitation.initiator_role === "doctor" ? "Sent Invitation" : "Received Request"}
                   </h4>
                   <p className={`${textSecondary} text-xs font-bold mt-1 uppercase tracking-widest`}>
                     Patient ID: {selectedInvitation.patient ? `PAT-${selectedInvitation.patient}` : "N/A"}
                   </p>
                 </div>
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white ${selectedInvitation.direction === "sent" ? "bg-blue-500" : "bg-emerald-500"}`}>
-                  <Icon name={selectedInvitation.direction === "sent" ? "send" : "download"} className="w-6 h-6" />
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white ${selectedInvitation.initiator_role === "doctor" ? "bg-blue-500" : "bg-emerald-500"}`}>
+                  <Icon name={selectedInvitation.initiator_role === "doctor" ? "send" : "download"} className="w-6 h-6" />
                 </div>
               </div>
               
@@ -637,13 +651,13 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
       </Modal>
 
       {/* Success Modal */}
-      <Modal isOpen={successModal.isOpen} onClose={() => setSuccessModal({ isOpen: false, message: "" })} title="Succès" size="sm">
+      <Modal isOpen={successModal.isOpen} onClose={() => setSuccessModal({ isOpen: false, message: "" })} title="Success" size="sm">
         <div className="text-center py-6 space-y-6">
           <div className="w-20 h-20 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
             <Icon name="check" className="w-10 h-10" />
           </div>
           <div className="space-y-2">
-            <h3 className={`text-xl font-black ${textPrimary}`}>Opération Réussie</h3>
+            <h3 className={`text-xl font-black ${textPrimary}`}>Operation Successful</h3>
             <p className={`text-sm font-medium ${textSecondary} px-6 leading-relaxed`}>
               {successModal.message}
             </p>
@@ -653,7 +667,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
               onClick={() => setSuccessModal({ isOpen: false, message: "" })}
               className="w-full bg-[#2da0a8] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20 active:scale-95"
             >
-              D'accord
+              Understood
             </button>
           </div>
         </div>
