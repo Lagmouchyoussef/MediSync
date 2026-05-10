@@ -18,11 +18,4 @@ class ActivityViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except Exception as e:
-            # Handle cases where activity doesn't exist or doesn't belong to user
-            return response.Response(
-                {'error': 'Activity not found or access denied'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        return super().destroy(request, *args, **kwargs)

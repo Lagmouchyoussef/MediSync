@@ -79,15 +79,9 @@ export default function PatientDashboard() {
   };
 
 
-  const addToHistory = (action, details, type) => {
-    const newEntry = {
-      id: Date.now(),
-      action,
-      details,
-      type: type || "admin",
-      timestamp: new Date().toISOString()
-    };
-    setHistory([newEntry, ...history]);
+  // History Refresh instead of manual add
+  const refreshHistory = () => {
+    fetchHistory();
   };
 
   // Notifications State
@@ -212,7 +206,7 @@ export default function PatientDashboard() {
   const renderPage = () => {
     switch (activePage) {
       case "dashboard": return <Dashboard onNavigate={setActivePage} appointments={appointments} notifications={notifications} historyCount={history.length} />;
-      case "appointments": return <Appointments onAddToHistory={addToHistory} appointments={appointments} setAppointments={setAppointments} />;
+      case "appointments": return <Appointments onAddToHistory={refreshHistory} appointments={appointments} setAppointments={setAppointments} />;
       case "history": return <HealthHistory history={history} setHistory={setHistory} />;
       case "settings": return <Configuration />;
       default: return <Dashboard onNavigate={setActivePage} appointments={appointments} notifications={notifications} historyCount={history.length} />;
