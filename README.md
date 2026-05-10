@@ -41,6 +41,38 @@ MediSync gère toutes les communications de manière professionnelle :
 
 ---
 
+## 🔗 Connexions et Flux de Données (Le "Câblage")
+
+Voici comment les différentes parties du projet communiquent entre elles :
+
+### 1. Connexion Backend ↔️ Base de Données (Django ORM)
+Le backend n'écrit pas de SQL manuellement. Il utilise l'**ORM de Django** :
+- Les fichiers `models.py` définissent les tables comme des classes Python.
+- La connexion est configurée dans `backend/settings.py` (via la clé `DATABASES`).
+- Django traduit automatiquement vos actions Python (ex: `Patient.objects.create()`) en commandes pour la base de données.
+
+### 2. Connexion Frontend ↔️ Backend (REST API)
+C'est ici que la magie opère entre React et Django :
+- **CORS (Cross-Origin Resource Sharing)** : Dans `settings.py`, nous avons autorisé `localhost:3000` (React) à parler à `localhost:8001` (Django). Sans cela, le navigateur bloquerait la connexion pour sécurité.
+- **Axios & API.js** : Le fichier `frontend/src/core/services/api.js` contient une instance de client HTTP. Il envoie des requêtes (GET, POST, etc.) vers les URLs définies dans le backend.
+- **Authentification par Token** : Quand vous vous connectez, le backend génère un **Token** unique. Le frontend stocke ce token et l'envoie dans l'en-tête de chaque requête (`Authorization: Token <votre_clé>`) pour prouver l'identité de l'utilisateur.
+
+### 3. Connexion Backend ↔️ APIs Externes (Brevo)
+Pour envoyer des emails, le backend agit comme un client :
+- Le fichier `email_service.py` récupère votre clé API secrète depuis le fichier `.env`.
+- Il utilise le SDK de Brevo pour envoyer des données formattées en JSON vers les serveurs de Brevo, qui se chargent ensuite de livrer l'email à votre patient.
+
+### 4. Le cycle d'une requête (Exemple : Prendre un rendez-vous)
+1. **Frontend** : L'utilisateur clique sur "Confirmer". React envoie les données à `api.js`.
+2. **Réseau** : La requête arrive au backend Django.
+3. **Backend** : `urls.py` dirige la requête vers une `view`.
+4. **Logique** : La `view` valide les données, les enregistre via le `model` dans la **Database**, puis appelle `email_service.py`.
+5. **API Externe** : Brevo reçoit l'ordre et envoie l'email.
+6. **Réponse** : Django renvoie un message de succès (JSON) au frontend.
+7. **UI** : React met à jour l'écran pour afficher "Rendez-vous confirmé !".
+
+---
+
 ## 🛠️ Stack Technique
 
 - **Backend** : Python / Django / Django Rest Framework
