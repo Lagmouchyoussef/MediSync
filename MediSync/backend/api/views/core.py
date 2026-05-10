@@ -13,7 +13,7 @@ class DashboardStatsView(APIView):
 
     def get(self, request):
         user = request.user
-        patients_count = Patient.objects.filter(doctor=user).count()
+        patients_count = Patient.objects.all().count()
         appointments_count = Appointment.objects.filter(doctor=user).count()
         activities_count = Activity.objects.filter(user=user).count()
         

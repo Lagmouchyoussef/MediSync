@@ -1,17 +1,13 @@
 /* BLUEPRINT-JS-START */
-// 🚀 Auto-generado para python: 5/10/2026, 2:29:49 PM
+// 🚀 Auto-generado para javascript: 5/10/2026, 2:48:19 PM
 
 'use strict';
 
-console.log('✅ 0 funciones y 5 clases detectadas');
+console.log('✅ 0 funciones y 1 clases detectadas');
 
 // Funciones interactivas
 // Clases detectadas
-console.log('📦 Clase: PatientAdmin');
-console.log('📦 Clase: AvailabilityAdmin');
-console.log('📦 Clase: AppointmentAdmin');
-console.log('📦 Clase: ActivityAdmin');
-console.log('📦 Clase: NotificationAdmin');
+console.log('📦 Clase: ApiService');
 
 // 🎮 Motor de Juego Pro (BluePrint Engine)
 const Game = {

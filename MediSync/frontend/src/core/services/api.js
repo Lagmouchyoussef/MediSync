@@ -124,19 +124,7 @@ class ApiService {
 
   async fetchCurrentUser() {
     try {
-      const token = this.getAuthToken();
-      if (!token) throw new Error('No auth token');
-
-      const response = await fetch(`${this.baseURL}/current-user/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Token ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to fetch current user');
+      const data = await this._authorizedRequest('/current-user/');
 
       if (data.user) {
         sessionStorage.setItem('userRole', data.user.role);
@@ -368,7 +356,7 @@ class ApiService {
     
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
-      const data = await response.json();
+      const data = await this.safeParseResponse(response);
       if (!response.ok) throw new Error(data.error || `Request failed with status ${response.status}`);
       return data;
     } else {

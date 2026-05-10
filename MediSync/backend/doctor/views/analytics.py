@@ -17,7 +17,7 @@ class AnalyticsView(APIView):
         user = request.user
         
         # Summary Stats
-        patients_count = Patient.objects.filter(doctor=user).count()
+        patients_count = Patient.objects.all().count()
         appointments_count = Appointment.objects.filter(doctor=user).count()
         history_count = Activity.objects.filter(user=user).count()
         
@@ -54,7 +54,7 @@ class AnalyticsView(APIView):
             })
 
         # Patient Demographics (Gender)
-        gender_stats = Patient.objects.filter(doctor=user).values('gender').annotate(count=Count('id'))
+        gender_stats = Patient.objects.all().values('gender').annotate(count=Count('id'))
 
         return Response({
             'summary': {
