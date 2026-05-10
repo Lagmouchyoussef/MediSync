@@ -46,24 +46,19 @@ export default function DoctorDashboard() {
   const handleMarkRead = (id) => setNotifications(notifications.map((n) => n.id === id ? { ...n, read: true } : n));
   const handleMarkAllRead = () => setNotifications(notifications.map((n) => ({ ...n, read: true })));
   const handleDismiss = async (id) => {
-    const notif = notifications.find((n) => n.id === id);
-    if (notif) {
-      try {
-        await apiService.createActivity("Notification Supprimée", `La notification "${notif.title}" a été supprimée de la liste.`, "notification");
+    try {
+      await apiService.deleteNotification(id);
+      setNotifications(notifications.filter((n) => n.id !== id));
+      
+      const notif = notifications.find((n) => n.id === id);
+      if (notif) {
+        await apiService.createActivity("Notification Supprimée", `La notification "${notif.title}" a été supprimée définitivement.`, "notification");
         const updatedHistory = await apiService.fetchActivities();
         setHistory(updatedHistory);
-      } catch (err) {
-        console.error("Error logging notification dismissal:", err);
       }
-      
-      // Persist dismissal locally so it doesn't reappear on refresh
-      const dismissedIds = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-      if (!dismissedIds.includes(id)) {
-        dismissedIds.push(id);
-        localStorage.setItem('dismissedNotifications', JSON.stringify(dismissedIds));
-      }
+    } catch (err) {
+      console.error("Error deleting notification:", err);
     }
-    setNotifications(notifications.filter((n) => n.id !== id));
   };
 
   // Global state for patients to persist changes
