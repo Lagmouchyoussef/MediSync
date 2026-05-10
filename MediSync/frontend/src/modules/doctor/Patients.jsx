@@ -1,17 +1,19 @@
 import { useState, useMemo } from "react";
 import { useTheme, getPatientId } from "./DoctorShared";
+import apiService from "../../core/services/api";
 import { Icon, Modal, Badge, SearchInput } from "./DoctorUI";
 
-export default function Patients({ patients, setPatients, setDeletedPatients }) {
+export default function Patients({ patients, setPatients }) {
   const { dark } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [formData, setFormData] = useState({ 
-    name: "", age: "", gender: "Male", phone: "", email: "", 
-    address: "", bloodType: "", username: "", password: "" 
+    first_name: "", last_name: "", gender: "Male", phone: "", email: "", 
+    address: "", date_of_birth: "", username: "", password: "" 
   });
   const [selectedIds, setSelectedIds] = useState([]);
 
@@ -25,63 +27,67 @@ export default function Patients({ patients, setPatients, setDeletedPatients }) 
   const paginatedPatients = filteredPatients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingPatient) { 
-      setPatients(patients.map((p) => p.id === editingPatient.id ? { ...p, ...formData } : p)); 
-    } else { 
-      setPatients([...patients, { 
-        id: patients.length > 0 ? Math.max(...patients.map(p => p.id)) + 1 : 1, 
-        ...formData, 
-        date: new Date().toISOString().split("T")[0], 
-        status: "Active", 
-        lastVisit: "N/A" 
-      }]); 
+    setIsSubmitting(true);
+    try {
+      if (editingPatient) { 
+        const updated = await apiService.updatePatient(editingPatient.id, formData);
+        setPatients(patients.map((p) => p.id === editingPatient.id ? { ...updated, name: `${updated.first_name} ${updated.last_name}` } : p)); 
+      } else { 
+        const created = await apiService.createPatient(formData);
+        setPatients([{ ...created, name: `${created.first_name} ${created.last_name}` }, ...patients]);
+        await apiService.createActivity("Registered Patient", `New patient ${created.first_name} registered.`);
+      }
+      setShowModal(false); 
+      setEditingPatient(null); 
+      setFormData({ 
+        first_name: "", last_name: "", gender: "Male", phone: "", email: "", 
+        address: "", date_of_birth: "", username: "", password: "" 
+      });
+    } catch (err) {
+      alert(err.message || "Error saving patient");
+    } finally {
+      setIsSubmitting(false);
     }
-    setShowModal(false); 
-    setEditingPatient(null); 
-    setFormData({ 
-      name: "", age: "", gender: "Male", phone: "", email: "", 
-      address: "", bloodType: "", username: "", password: "" 
-    });
   };
 
   const handleEdit = (patient) => { 
     setEditingPatient(patient); 
     setFormData({ 
-      name: patient.name, age: patient.age.toString(), gender: patient.gender, 
-      phone: patient.phone, email: patient.email, address: patient.address, 
-      bloodType: patient.bloodType, username: patient.username || "", password: "" 
+      first_name: patient.first_name, last_name: patient.last_name, gender: patient.gender, 
+      phone: patient.phone || "", email: patient.email || "", address: patient.address || "", 
+      date_of_birth: patient.date_of_birth || "", username: patient.username || "", password: "" 
     }); 
     setShowModal(true); 
   };
 
-  const handleDelete = (id) => { 
-    // Find the patient to delete and add to deleted list
-    const patientToDelete = patients.find(p => String(p.id) === String(id));
-    if (patientToDelete && setDeletedPatients) {
-      setDeletedPatients(prev => [...prev, { ...patientToDelete, deletedAt: new Date().toISOString() }]);
+  const handleDelete = async (id) => { 
+    if (!confirm("Are you sure you want to delete this patient?")) return;
+    try {
+      await apiService.deletePatient(id);
+      setPatients(prev => prev.filter((p) => String(p.id) !== String(id)));
+      setSelectedIds(prev => prev.filter(sId => String(sId) !== String(id)));
+      await apiService.createActivity("Deleted Patient", `Patient ID ${id} was deleted.`, "danger");
+    } catch (err) {
+      alert("Failed to delete patient");
     }
-    
-    // Use functional update to ensure we have the latest state
-    setPatients(prev => prev.filter((p) => String(p.id) !== String(id)));
-    setSelectedIds(prev => prev.filter(sId => String(sId) !== String(id)));
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to permanently delete ${selectedIds.length} patients?`)) return;
     
-    // Find patients to delete and add to deleted list
-    const patientsToDelete = patients.filter(p => selectedIds.map(String).includes(String(p.id)));
-    if (patientsToDelete.length > 0 && setDeletedPatients) {
-      setDeletedPatients(prev => [
-        ...prev, 
-        ...patientsToDelete.map(p => ({ ...p, deletedAt: new Date().toISOString() }))
-      ]);
+    try {
+      for (const id of selectedIds) {
+        await apiService.deletePatient(id);
+      }
+      setPatients(prev => prev.filter(p => !selectedIds.map(String).includes(String(p.id))));
+      setSelectedIds([]);
+      await apiService.createActivity("Bulk Deletion", `${selectedIds.length} patients were permanently deleted.`, "danger");
+    } catch (err) {
+      alert("Failed to delete some patients");
     }
-    
-    setPatients(prev => prev.filter(p => !selectedIds.map(String).includes(String(p.id))));
-    setSelectedIds([]);
   };
 
   const toggleSelectAll = () => {
@@ -122,7 +128,7 @@ export default function Patients({ patients, setPatients, setDeletedPatients }) 
             </button>
           )}
           <button 
-            onClick={() => { setEditingPatient(null); setFormData({ name: "", age: "", gender: "Male", phone: "", email: "", address: "", bloodType: "" }); setShowModal(true); }} 
+            onClick={() => { setEditingPatient(null); setFormData({ first_name: "", last_name: "", gender: "Male", phone: "", email: "", address: "", date_of_birth: "" }); setShowModal(true); }} 
             className="flex items-center gap-2 bg-[#2da0a8] text-white px-5 py-2.5 rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20 active:scale-95"
           >
             <Icon name="plus" className="w-4 h-4" /> New Patient
@@ -249,12 +255,12 @@ export default function Patients({ patients, setPatients, setDeletedPatients }) 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${textSecondary}`}>Full Name *</label>
-              <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={inputClass} placeholder="John Doe" />
+              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${textSecondary}`}>First Name *</label>
+              <input type="text" required value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className={inputClass} placeholder="John" />
             </div>
             <div>
-              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${textSecondary}`}>Age *</label>
-              <input type="number" required value={formData.age} onChange={(e) => setFormData({ ...formData, age: e.target.value })} className={inputClass} placeholder="30" />
+              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${textSecondary}`}>Last Name *</label>
+              <input type="text" required value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className={inputClass} placeholder="Doe" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -266,11 +272,8 @@ export default function Patients({ patients, setPatients, setDeletedPatients }) 
               </select>
             </div>
             <div>
-              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${textSecondary}`}>Blood Type</label>
-              <select value={formData.bloodType} onChange={(e) => setFormData({ ...formData, bloodType: e.target.value })} className={inputClass}>
-                <option value="">Select Type</option>
-                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bt) => (<option key={bt} value={bt}>{bt}</option>))}
-              </select>
+              <label className={`block text-xs font-black uppercase tracking-widest mb-2 ${textSecondary}`}>Date of Birth *</label>
+              <input type="date" required value={formData.date_of_birth} onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })} className={inputClass} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -306,8 +309,8 @@ export default function Patients({ patients, setPatients, setDeletedPatients }) 
             <button type="button" onClick={() => setShowModal(false)} className={`flex-1 px-6 py-3 border rounded-xl transition-all font-bold text-sm ${dark ? "border-slate-700 hover:bg-slate-800 text-slate-300" : "border-slate-200 hover:bg-slate-50 text-slate-700"}`}>
               Cancel
             </button>
-            <button type="submit" className="flex-1 px-6 py-3 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20 active:scale-95">
-              {editingPatient ? "Apply Changes" : "Register Patient"}
+            <button type="submit" disabled={isSubmitting} className="flex-1 px-6 py-3 bg-[#2da0a8] text-white rounded-xl hover:bg-[#258a91] transition-all font-bold text-sm shadow-lg shadow-teal-500/20 active:scale-95 disabled:opacity-50">
+              {isSubmitting ? "Processing..." : (editingPatient ? "Apply Changes" : "Register Patient")}
             </button>
           </div>
         </form>

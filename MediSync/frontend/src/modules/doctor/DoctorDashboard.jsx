@@ -40,16 +40,30 @@ export default function DoctorDashboard() {
     navigate('/');
   };
 
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: "system", title: "Bienvenue", message: "Bienvenue sur votre nouveau tableau de bord MediSync.", date: new Date().toISOString(), read: false },
+    { id: 2, type: "security", title: "Session active", message: "Une nouvelle connexion a été détectée sur cet appareil.", date: new Date().toISOString(), read: true }
+  ]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const handleMarkRead = (id) => setNotifications(notifications.map((n) => n.id === id ? { ...n, read: true } : n));
   const handleMarkAllRead = () => setNotifications(notifications.map((n) => ({ ...n, read: true })));
-  const handleDismiss = (id) => setNotifications(notifications.filter((n) => n.id !== id));
+  const handleDismiss = async (id) => {
+    const notif = notifications.find((n) => n.id === id);
+    if (notif) {
+      try {
+        await apiService.createActivity("Notification Supprimée", `La notification "${notif.title}" a été supprimée de la liste.`, "notification");
+        const updatedHistory = await apiService.fetchActivities();
+        setHistory(updatedHistory);
+      } catch (err) {
+        console.error("Error logging notification dismissal:", err);
+      }
+    }
+    setNotifications(notifications.filter((n) => n.id !== id));
+  };
 
   // Global state for patients to persist changes
   const [patients, setPatients] = useState([]);
-  const [deletedPatients, setDeletedPatients] = useState([]);
   
   // Navigation states
   const [expandedNav, setExpandedNav] = useState(null);
@@ -67,6 +81,35 @@ export default function DoctorDashboard() {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) setUserMenuOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
+    
+    // Global data fetch
+    const fetchData = async () => {
+      try {
+        const patientsData = await apiService.fetchPatients();
+        if (Array.isArray(patientsData)) {
+          const formattedPatients = patientsData.map(p => ({
+            ...p,
+            name: `${p.first_name} ${p.last_name}`,
+            age: p.date_of_birth ? (new Date().getFullYear() - new Date(p.date_of_birth).getFullYear()) : "N/A"
+          }));
+          setPatients(formattedPatients);
+        }
+
+        const appointmentsData = await apiService.fetchAppointments();
+        if (Array.isArray(appointmentsData)) {
+          setInvitations(appointmentsData);
+        }
+
+        const activitiesData = await apiService.fetchActivities();
+        if (Array.isArray(activitiesData)) {
+          setHistory(activitiesData);
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+      }
+    };
+    fetchData();
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
@@ -80,15 +123,15 @@ export default function DoctorDashboard() {
     {
       title: "Clinical",
       items: [
-        { id: "patients", label: "Patients", icon: "patients", badge: patients.length },
+        { id: "patients", label: "Patients", icon: "patients", badge: Array.isArray(patients) ? patients.length : 0 },
         { 
           id: "appointments", 
           label: "Availability", 
           icon: "appointments", 
-          badge: invitations.length,
+          badge: Array.isArray(invitations) ? invitations.length : 0,
           subItems: [
             { id: "manage", label: "Manage Setup" },
-            { id: "history", label: "Invitation History", badge: invitations.length }
+            { id: "history", label: "Invitation History", badge: Array.isArray(invitations) ? invitations.length : 0 }
           ]
         },
       ]
@@ -96,28 +139,46 @@ export default function DoctorDashboard() {
     {
       title: "Administration",
       items: [
-        { id: "history", label: "Activity", icon: "history", badge: history.length },
+        { id: "history", label: "Activity", icon: "history", badge: Array.isArray(history) ? history.length : 0 },
         { id: "settings", label: "Configuration", icon: "settings", badge: null },
       ]
     }
   ];
 
   const renderPage = () => {
+    const pCount = Array.isArray(patients) ? patients.length : 0;
+    const iCount = Array.isArray(invitations) ? invitations.length : 0;
+    const hCount = Array.isArray(history) ? history.length : 0;
+    const nUnread = Array.isArray(notifications) ? notifications.filter(n => !n.read).length : 0;
+    const safeInvs = Array.isArray(invitations) ? invitations : [];
+
     switch (activePage) {
       case "dashboard": return (
         <Dashboard
-          patientsCount={patients.length}
-          appointmentCount={invitations.length}
-          historyCount={history.length}
-          notificationsCount={notifications.filter((n) => !n.read).length}
-          upcomingAppointments={invitations}
+          patientsCount={pCount}
+          appointmentCount={safeInvs.filter(i => {
+            if (!i.date) return false;
+            const d = new Date(i.date);
+            return !isNaN(d.getTime()) && d.toDateString() === new Date().toDateString();
+          }).length}
+          historyCount={hCount}
+          notificationsCount={nUnread}
+          upcomingAppointments={safeInvs.slice(0, 5).map(i => ({ ...i, patient: i.patient_name || i.patient || "Patient" }))}
         />
       );
-      case "patients": return <Patients patients={patients} setPatients={setPatients} setDeletedPatients={setDeletedPatients} />;
-      case "appointments": return <Appointments activeTab={appointmentsTab} setActiveTab={setAppointmentsTab} invitations={invitations} setInvitations={setInvitations} />;
-      case "history": return <History deletedPatients={deletedPatients} setDeletedPatients={setDeletedPatients} setPatients={setPatients} history={history} setHistory={setHistory} />;
+      case "patients": return <Patients patients={Array.isArray(patients) ? patients : []} setPatients={setPatients} />;
+      case "appointments": return <Appointments activeTab={appointmentsTab} setActiveTab={setAppointmentsTab} invitations={safeInvs} setInvitations={setInvitations} patients={Array.isArray(patients) ? patients : []} />;
+      case "history": return <History setPatients={setPatients} history={Array.isArray(history) ? history : []} setHistory={setHistory} />;
       case "settings": return <Settings />;
-      default: return <Dashboard patientsCount={patients.length} appointmentCount={invitations.length} historyCount={history.length} notificationsCount={notifications.filter((n) => !n.read).length} upcomingAppointments={invitations} />;
+      default: return (
+        <Dashboard 
+          patientsCount={pCount} 
+          appointmentCount={iCount} 
+          historyCount={hCount} 
+          notificationsCount={nUnread} 
+          upcomingAppointments={safeInvs} 
+        />
+      );
     }
   };
 
@@ -298,7 +359,12 @@ export default function DoctorDashboard() {
                 </div>
                 <input 
                   type="text" 
-                  placeholder="Quick search patients, docs..." 
+                  placeholder="Rechercher un patient..." 
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setActivePage('patients');
+                    }
+                  }}
                   className={`pl-11 pr-4 py-3 border rounded-2xl text-[13px] w-64 focus:w-80 transition-all duration-500 outline-none font-bold ${searchInputStyle} focus:ring-4 focus:ring-[#2da0a8]/10 focus:border-[#2da0a8] shadow-sm`} 
                 />
               </div>

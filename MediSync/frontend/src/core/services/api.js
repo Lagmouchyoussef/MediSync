@@ -174,6 +174,68 @@ class ApiService {
   isAuthenticated() {
     return !!this.getAuthToken();
   }
+
+  // --- Patients ---
+  async fetchPatients() {
+    return this._authorizedRequest('/patients/');
+  }
+
+  async createPatient(patientData) {
+    return this._authorizedRequest('/patients/', 'POST', patientData);
+  }
+
+  async updatePatient(id, patientData) {
+    return this._authorizedRequest(`/patients/${id}/`, 'PUT', patientData);
+  }
+
+  async deletePatient(id) {
+    return this._authorizedRequest(`/patients/${id}/`, 'DELETE');
+  }
+
+  // --- Appointments ---
+  async fetchAppointments() {
+    return this._authorizedRequest('/appointments/');
+  }
+
+  async createAppointment(data) {
+    return this._authorizedRequest('/appointments/', 'POST', data);
+  }
+
+  // --- Stats ---
+  async fetchStats() {
+    return this._authorizedRequest('/stats/');
+  }
+
+  // --- Activities ---
+  async fetchActivities() {
+    return this._authorizedRequest('/activities/');
+  }
+
+  async createActivity(action, details = "", type = "info") {
+    return this._authorizedRequest('/activities/', 'POST', { action, details, type });
+  }
+
+  // --- Helper for authorized requests ---
+  async _authorizedRequest(endpoint, method = 'GET', body = null) {
+    const token = this.getAuthToken();
+    if (!token) throw new Error('Not authenticated');
+
+    const headers = {
+      'Authorization': `Token ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+
+    const response = await fetch(`${this.baseURL}${endpoint}`, options);
+    
+    if (response.status === 204) return true;
+    
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  }
 }
 
 export default new ApiService();

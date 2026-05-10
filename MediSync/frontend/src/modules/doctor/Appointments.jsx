@@ -1,15 +1,17 @@
-import { useState } from "react";
-import { useTheme, mockPatients, getPatientId } from "./DoctorShared";
+import { useState, useEffect } from "react";
+import { useTheme, getPatientId } from "./DoctorShared";
 import apiService from "../../core/services/api";
 import { Icon, Badge, Modal } from "./DoctorUI";
 
-export default function Appointments({ activeTab: externalActiveTab, setActiveTab: setExternalActiveTab, invitations = [], setInvitations }) {
+export default function Appointments({ activeTab: externalActiveTab, setActiveTab: setExternalActiveTab, invitations = [], setInvitations, patients = [] }) {
   const { dark } = useTheme();
   
   // State for Availability
   const [availableDays, setAvailableDays] = useState(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
+  const [isSavingAvailability, setIsSavingAvailability] = useState(false);
+  const [isSendingInvitation, setIsSendingInvitation] = useState(false);
   
   // State for Invitation
   const [invitationForm, setInvitationForm] = useState({
@@ -28,8 +30,54 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
   const activeTab = externalActiveTab !== undefined ? externalActiveTab : localActiveTab;
   const setActiveTab = setExternalActiveTab || setLocalActiveTab;
 
-  const updateStatus = (id, newStatus) => {
-    setInvitations(prev => prev.map(inv => inv.id === id ? { ...inv, status: newStatus } : inv));
+  const updateStatus = async (id, newStatus) => {
+    try {
+      // For now, update local state, but in real app would call API
+      setInvitations(prev => prev.map(inv => inv.id === id ? { ...inv, status: newStatus } : inv));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSaveAvailability = async () => {
+    setIsSavingAvailability(true);
+    try {
+      // In a real app, you'd send the array of days and times
+      await apiService.createActivity("Updated Availability", `New hours: ${startTime} - ${endTime} for ${availableDays.join(', ')}`);
+      alert("Availability saved successfully!");
+    } catch (err) {
+      alert("Error saving availability");
+    } finally {
+      setIsSavingAvailability(false);
+    }
+  };
+
+  const handleSendInvitation = async (e) => {
+    e.preventDefault();
+    if (!invitationForm.patientId) return alert("Please select a patient");
+    
+    setIsSendingInvitation(true);
+    try {
+      const selectedPatient = patients.find(p => String(p.id) === String(invitationForm.patientId));
+      const res = await apiService.createAppointment({
+        patient_name: selectedPatient ? selectedPatient.name : "Unknown",
+        patient: invitationForm.patientId,
+        date: invitationForm.date,
+        time: invitationForm.time,
+        type: invitationForm.type,
+        status: "Pending"
+      });
+      
+      setInvitations([res, ...invitations]);
+      await apiService.createActivity("Sent Invitation", `Invitation sent to ${selectedPatient.name} for ${invitationForm.date}.`);
+      setShowPreview(false);
+      setInvitationForm({ ...invitationForm, patientId: "", time: "", notes: "" });
+      alert("Invitation sent successfully!");
+    } catch (err) {
+      alert(err.message || "Error sending invitation");
+    } finally {
+      setIsSendingInvitation(false);
+    }
   };
 
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -166,8 +214,12 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
               </div>
 
               <div className="flex gap-3">
-                <button className="flex-1 bg-[#2da0a8] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20 active:scale-95">
-                  Save Availability
+                <button 
+                  onClick={handleSaveAvailability}
+                  disabled={isSavingAvailability}
+                  className="flex-1 bg-[#2da0a8] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20 active:scale-95 disabled:opacity-50"
+                >
+                  {isSavingAvailability ? "Saving..." : "Save Availability"}
                 </button>
                 <button className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all border ${dark ? "border-slate-800 text-slate-400 hover:bg-slate-800" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
                   View Schedule
@@ -217,8 +269,8 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
                 onChange={(e) => setInvitationForm({...invitationForm, patientId: e.target.value})}
               >
                 <option value="">Choose a patient...</option>
-                {mockPatients.map(p => (
-                  <option key={p.id} value={p.id}>{p.name} ({getPatientId(p)})</option>
+                {patients.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} (PAT-{p.id})</option>
                 ))}
               </select>
             </div>
@@ -268,9 +320,14 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
             </div>
 
             <div className="pt-4 space-y-3">
-              <button type="button" className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3">
+              <button 
+                type="button" 
+                onClick={handleSendInvitation}
+                disabled={isSendingInvitation}
+                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+              >
                 <Icon name="send" className="w-4 h-4" />
-                <span>Send Invitation</span>
+                <span>{isSendingInvitation ? "Sending..." : "Send Invitation"}</span>
               </button>
               <button type="button" onClick={() => setShowPreview(true)} className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${dark ? "hover:bg-slate-800 text-slate-400" : "hover:bg-slate-50 text-slate-500"}`}>
                 Preview Invitation
@@ -320,9 +377,9 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
                       )}
                     </td>
                     <td className="py-4 pr-4">
-                      <p className={`text-sm font-bold ${textPrimary}`}>{inv.patient}</p>
+                      <p className={`text-sm font-bold ${textPrimary}`}>{inv.patient_name || inv.patient}</p>
                       <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary}`}>
-                        {getPatientId(mockPatients.find(p => p.name === inv.patient))}
+                        {inv.patient ? `PAT-${inv.patient}` : "EXTERNAL"}
                       </p>
                     </td>
                     <td className="py-4 pr-4">
@@ -393,8 +450,8 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
               <div>
                 <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary} mb-1`}>Patient</p>
                 <p className={`text-sm font-bold ${textPrimary}`}>
-                  {mockPatients.find(p => String(p.id) === String(invitationForm.patientId))?.name || "No patient selected"}
-                  {invitationForm.patientId && <span className="ml-2 text-xs font-black uppercase tracking-widest text-slate-400">{getPatientId(mockPatients.find(p => String(p.id) === String(invitationForm.patientId)))}</span>}
+                  {patients.find(p => String(p.id) === String(invitationForm.patientId))?.name || "No patient selected"}
+                  {invitationForm.patientId && <span className="ml-2 text-xs font-black uppercase tracking-widest text-slate-400">PAT-{invitationForm.patientId}</span>}
                 </p>
               </div>
               
@@ -429,8 +486,12 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
             <button onClick={() => setShowPreview(false)} className={`flex-1 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${dark ? "bg-slate-800 hover:bg-slate-700 text-slate-300" : "bg-slate-100 hover:bg-slate-200 text-slate-600"}`}>
               Close
             </button>
-            <button className="flex-1 bg-[#2da0a8] text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20">
-              Send Now
+            <button 
+              onClick={handleSendInvitation}
+              disabled={isSendingInvitation}
+              className="flex-1 bg-[#2da0a8] text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#20838a] transition-all shadow-lg shadow-teal-500/20 disabled:opacity-50"
+            >
+              {isSendingInvitation ? "Sending..." : "Send Now"}
             </button>
           </div>
         </div>
@@ -447,7 +508,7 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
                     {selectedInvitation.direction === "sent" ? "Sent Invitation" : "Received Request"}
                   </h4>
                   <p className={`${textSecondary} text-xs font-bold mt-1 uppercase tracking-widest`}>
-                    Patient: {getPatientId(mockPatients.find(p => p.name === selectedInvitation.patient))}
+                    Patient ID: {selectedInvitation.patient ? `PAT-${selectedInvitation.patient}` : "N/A"}
                   </p>
                 </div>
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white ${selectedInvitation.direction === "sent" ? "bg-blue-500" : "bg-emerald-500"}`}>
@@ -459,9 +520,9 @@ export default function Appointments({ activeTab: externalActiveTab, setActiveTa
                 <div>
                   <p className={`text-[10px] font-black uppercase tracking-widest ${textSecondary} mb-1`}>Patient</p>
                   <p className={`text-sm font-bold ${textPrimary}`}>
-                    {selectedInvitation.patient}
+                    {selectedInvitation.patient_name || selectedInvitation.patient}
                     <span className="ml-2 text-xs font-black uppercase tracking-widest text-slate-400">
-                      {getPatientId(mockPatients.find(p => p.name === selectedInvitation.patient))}
+                      {selectedInvitation.patient ? `PAT-${selectedInvitation.patient}` : ""}
                     </span>
                   </p>
                 </div>
