@@ -18,10 +18,10 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
 }
 
 Write-Host 'Opening backend server in a new PowerShell window...' -ForegroundColor Green
-Start-Process pwsh -ArgumentList '-NoExit', '-Command', "Set-Location -Path '$backendDir'; python manage.py runserver 8001" -WorkingDirectory $backendDir
+Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location -Path '$backendDir'; python manage.py runserver 8001" -WorkingDirectory $backendDir
 
 Write-Host 'Opening frontend server in a new PowerShell window...' -ForegroundColor Green
-Start-Process pwsh -ArgumentList '-NoExit', '-Command', "Set-Location -Path '$frontendDir'; npm run dev" -WorkingDirectory $frontendDir
+Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location -Path '$frontendDir'; npm run dev" -WorkingDirectory $frontendDir
 
 Write-Host 'All startup commands have been launched.' -ForegroundColor Cyan
 Write-Host 'Backend: http://localhost:8001' -ForegroundColor Yellow

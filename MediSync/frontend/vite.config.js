@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: '/static/',
+  base: '/',
   server: {
     port: 3000,
     proxy: {
