@@ -82,7 +82,7 @@ export default function Login() {
         playsInline
         preload="auto"
       >
-        <source src={window.location.port === "3000" ? "/background.mp4" : "/static/background.mp4"} type="video/mp4" />
+        <source src="/static/background.mp4" type="video/mp4" />
       </video>
 
       <div className="absolute top-0 left-0 w-full h-full bg-black/40 z-10"></div>
