@@ -4,8 +4,10 @@ import PatientDashboard from '../modules/patient/PatientDashboard.jsx';
 import DoctorDashboard from '../modules/doctor/DoctorDashboard.jsx';
 
 function App() {
+  const basename = window.location.pathname.startsWith('/static') ? '/static' : '';
+
   return (
-    <Router>
+    <Router basename={basename}>
       <div className="App">
         <Routes>
           <Route path="/" element={<Login />} />

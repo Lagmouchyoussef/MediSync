@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: process.env.NODE_ENV === 'production' ? '/static/' : '/',
+  base: '/static/',
   server: {
     port: 3000,
     proxy: {
