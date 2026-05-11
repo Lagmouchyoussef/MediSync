@@ -47,7 +47,8 @@ ARG DEFAULT_FROM_EMAIL=dummy@example.com
 ARG BREVO_API_KEY=dummy
 
 # Run collectstatic to prepare production assets
-RUN python manage.py collectstatic --noinput
+# We provide dummy values to avoid connection errors during build
+RUN DATABASE_URL=sqlite:///:memory: SECRET_KEY=build-time-secret python manage.py collectstatic --noinput
 
 # Environment variables
 ENV PYTHONUNBUFFERED=1
