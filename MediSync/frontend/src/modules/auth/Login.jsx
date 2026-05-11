@@ -72,9 +72,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-slate-900">
       {/* Background Video */}
-      <video className="absolute top-0 left-0 w-full h-full object-cover z-0" autoPlay loop muted playsInline>
+      <video 
+        className="absolute top-0 left-0 w-full h-full object-cover z-0" 
+        autoPlay 
+        loop 
+        muted 
+        playsInline
+        preload="auto"
+      >
         <source src={`${import.meta.env.BASE_URL}background.mp4`} type="video/mp4" />
       </video>
 
