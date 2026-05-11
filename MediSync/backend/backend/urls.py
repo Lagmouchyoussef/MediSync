@@ -25,10 +25,16 @@ urlpatterns = [
     path('api/doctor/', include('doctor.urls')),
     path('api/patient/', include('patient.urls')),
     path('api/', include('api.urls')),
-    # Catch-all pour servir le frontend React
-    path('', TemplateView.as_view(template_name='index.html')),
-    path('<path:resource>', TemplateView.as_view(template_name='index.html')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# En production, on sert le frontend React via Django
+if not settings.DEBUG:
+    urlpatterns += [
+        path('', TemplateView.as_view(template_name='index.html')),
+        path('<path:resource>', TemplateView.as_view(template_name='index.html')),
+    ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Admin Site Customization
 admin.site.site_header = "MediSync Administration"
