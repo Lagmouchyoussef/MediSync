@@ -38,14 +38,6 @@ COPY --from=frontend-builder /app/frontend/dist /app/static/
 # Copy index.html to templates for Django to serve it
 RUN mkdir -p /app/templates && cp /app/static/index.html /app/templates/index.html
 
-# Provide dummy env vars for collectstatic (Django settings load requires these at import time)
-ARG SECRET_KEY=dummy-build-key
-ARG DATABASE_URL=sqlite:///dummy
-ARG EMAIL_HOST_USER=dummy
-ARG EMAIL_HOST_PASSWORD=dummy
-ARG DEFAULT_FROM_EMAIL=dummy@example.com
-ARG BREVO_API_KEY=dummy
-
 # Run collectstatic to prepare production assets
 # We provide dummy values for all required environment variables to avoid build-time errors
 RUN DATABASE_URL=sqlite:///:memory: \
