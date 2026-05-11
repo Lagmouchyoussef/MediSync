@@ -274,12 +274,12 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='webmaster@localhost')
 
 # Brevo API Key (for Transactional Emails with Templates)
-BREVO_API_KEY = env('BREVO_API_KEY')
+BREVO_API_KEY = env('BREVO_API_KEY', default='')
 
 # Brevo Template IDs
 BREVO_TEMPLATE_NEW_REQUEST = env.int('BREVO_TEMPLATE_NEW_REQUEST', default=1)
