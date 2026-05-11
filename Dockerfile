@@ -1,9 +1,9 @@
 # --- Stage 1: Build React Frontend ---
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
+COPY MediSync/frontend/package*.json ./
 RUN npm install
-COPY frontend/ ./
+COPY MediSync/frontend/ ./
 RUN npm run build
 
 # --- Stage 2: Build Django Backend ---
@@ -20,14 +20,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY backend/requirements.txt .
+COPY MediSync/backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create necessary directories
 RUN mkdir -p /app/staticfiles /app/media /app/static /app/templates
 
 # Copy backend code
-COPY backend/ /app/
+COPY MediSync/backend/ /app/
 
 # Make entrypoint script executable and fix line endings
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh

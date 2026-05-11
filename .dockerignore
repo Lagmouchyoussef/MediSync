@@ -1,0 +1,21 @@
+# Git
+.git
+.gitignore
+
+# Python
+**/__pycache__
+**/*.pyc
+MediSync/backend/db.sqlite3
+MediSync/backend/media
+MediSync/backend/staticfiles
+MediSync/backend/venv
+.env
+
+# Node
+MediSync/frontend/node_modules
+MediSync/frontend/dist
+
+# Docker
+Dockerfile
+docker-compose.yml
+MediSync.zip
